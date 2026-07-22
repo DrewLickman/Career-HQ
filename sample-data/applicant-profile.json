@@ -1,0 +1,51 @@
+{
+  "fixture": true,
+  "schemaVersion": 1,
+  "identity": {
+    "displayName": { "value": "Avery Rowan", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    "email": { "value": "avery.rowan@example.test", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    "location": { "value": "Madison, WI", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+  },
+  "searchDirection": {
+    "targetRoles": { "value": ["Implementation Specialist", "Customer Success Operations", "Technical Project Coordinator"], "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    "workArrangement": { "value": ["remote", "hybrid"], "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+  },
+  "summary": {
+    "value": "Implementation and operations specialist who turns ambiguous customer needs into documented, repeatable launches.",
+    "source": "fictional-fixture",
+    "verifiedAt": "2026-07-01",
+    "verified": true
+  },
+  "skills": [
+    { "value": "Customer onboarding", "context": "Professional implementation work", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    { "value": "Process documentation", "context": "Professional operations work", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    { "value": "SQL", "context": "Coursework and personal reporting projects", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+  ],
+  "experience": [
+    {
+      "id": "exp-001",
+      "employer": "Northline Workshop",
+      "title": "Implementation Coordinator",
+      "startDate": "2023-02",
+      "endDate": "2026-05",
+      "experienceType": "professional",
+      "claims": [
+        { "value": "Coordinated onboarding plans across customer, support, and product teams.", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+        { "value": "Reduced average handoff time by 18% using an approved measurement from the fictional fixture.", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+      ]
+    },
+    {
+      "id": "exp-002",
+      "employer": "Cedar Signal Cooperative",
+      "title": "Operations Assistant",
+      "startDate": "2020-06",
+      "endDate": "2023-01",
+      "experienceType": "professional",
+      "claims": [
+        { "value": "Maintained process documentation and weekly service reports for a small client operations team.", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+      ]
+    }
+  ],
+  "conflicts": [],
+  "sources": [{ "id": "fictional-fixture", "kind": "fixture", "label": "Clearly fictional sample applicant" }]
+}

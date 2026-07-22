@@ -1,0 +1,18 @@
+{
+  "fixture": true,
+  "truthReviewed": true,
+  "reviewedAt": "2026-07-21",
+  "sourceSummary": "Implementation and operations specialist who turns ambiguous customer needs into documented, repeatable launches.",
+  "tailoredSummary": "Implementation specialist experienced in turning customer needs into documented onboarding plans and repeatable launches.",
+  "skillOrder": ["Customer onboarding", "Process documentation", "SQL"],
+  "claims": [
+    {
+      "sourceText": "Coordinated onboarding plans across customer, support, and product teams.",
+      "tailoredText": "Coordinated customer onboarding plans and cross-functional handoffs across support and product teams."
+    },
+    {
+      "sourceText": "Reduced average handoff time by 18% using an approved measurement from the fictional fixture.",
+      "tailoredText": "Improved a repeatable handoff workflow, reducing average handoff time by 18%."
+    }
+  ]
+}

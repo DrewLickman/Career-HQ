@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-hq.example/schemas/applications.schema.json",
+  "title": "Career HQ application ledger",
+  "type": "object",
+  "required": ["schemaVersion", "applications"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "applications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "employer", "role", "status", "fit", "postingSnapshots", "nextAction"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["research", "ready", "applied", "assessment", "interview", "offer", "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted"] },
+          "fit": { "enum": ["strong-match", "reasonable-stretch", "low-probability-stretch", "not-recommended"] },
+          "postingSnapshots": { "type": "array" },
+          "materials": { "type": "array" }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

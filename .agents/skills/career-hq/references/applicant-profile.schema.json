@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-hq.example/schemas/applicant-profile.schema.json",
+  "title": "Career HQ applicant profile",
+  "type": "object",
+  "required": ["schemaVersion", "identity", "searchDirection", "skills", "experience", "sources", "conflicts"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "identity": { "type": "object" },
+    "searchDirection": { "type": "object" },
+    "skills": { "type": "array" },
+    "experience": { "type": "array" },
+    "sources": { "type": "array" },
+    "conflicts": { "type": "array" }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "evidenceValue": {
+      "type": "object",
+      "required": ["value", "source", "verifiedAt", "verified"],
+      "properties": {
+        "value": {}, "source": { "type": "string", "minLength": 1 },
+        "verifiedAt": { "type": "string", "format": "date" }, "verified": { "type": "boolean" }
+      }
+    }
+  }
+}

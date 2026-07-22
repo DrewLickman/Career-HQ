@@ -1,0 +1,8 @@
+{
+  "preset": "standard_business_brief",
+  "page": { "size": "US Letter", "marginsInches": 1, "headerFooterDistanceInches": 0.492 },
+  "typography": { "font": "Arial", "bodyPt": 10.5, "titlePt": 22, "headingPt": 13, "lineSpacing": 1.1 },
+  "colors": { "ink": "#17201B", "accent": "#5C820B" },
+  "lists": { "markerInches": 0.25, "textIndentInches": 0.5, "afterPt": 3 },
+  "titleBorder": "none"
+}

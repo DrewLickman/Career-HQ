@@ -1,0 +1,28 @@
+{
+  "fixture": true,
+  "generatedAt": "2026-07-21",
+  "applicant": { "displayName": "Avery Rowan", "targetLane": "Implementation & customer operations" },
+  "applications": [
+    {
+      "id": "demo-001", "employer": "Juniper Harbor", "role": "Implementation Specialist", "location": "Madison, WI", "arrangement": "Hybrid", "status": "interview", "fit": "strong-match", "compensation": "$72k-$84k", "nextAction": "Prepare interview story bank", "nextActionDate": "2026-07-22", "strongestMatch": "Cross-functional customer onboarding and documented launch plans.", "largestGap": "No verified ownership of enterprise deployments.", "risk": "Travel expectation needs confirmation.", "updatedAt": "2026-07-20"
+    },
+    {
+      "id": "demo-002", "employer": "Lumen Fieldworks", "role": "Customer Operations Analyst", "location": "Remote - US", "arrangement": "Remote", "status": "assessment", "fit": "reasonable-stretch", "compensation": "$68k-$80k", "nextAction": "Complete approved take-home review", "nextActionDate": "2026-07-23", "strongestMatch": "Process reporting and stakeholder coordination.", "largestGap": "Advanced SQL is preferred; only foundational use is verified.", "risk": "Assessment scope may exceed the expected time commitment.", "updatedAt": "2026-07-19"
+    },
+    {
+      "id": "demo-003", "employer": "Morrow Systems", "role": "Onboarding Project Coordinator", "location": "Milwaukee, WI", "arrangement": "Hybrid", "status": "ready", "fit": "strong-match", "compensation": "$70k-$78k", "nextAction": "Review tailored resume and answers", "nextActionDate": "2026-07-21", "strongestMatch": "Direct coordination experience across support and product.", "largestGap": "No verified healthcare-industry experience.", "risk": "Three office days may conflict with commute preference.", "updatedAt": "2026-07-21"
+    },
+    {
+      "id": "demo-004", "employer": "Common Thread Labs", "role": "Technical Project Coordinator", "location": "Chicago, IL", "arrangement": "Remote", "status": "applied", "fit": "reasonable-stretch", "compensation": "$75k-$88k", "nextAction": "Send seven-day follow-up", "nextActionDate": "2026-07-25", "strongestMatch": "Clear documentation and cross-team handoffs.", "largestGap": "No verified software release ownership.", "risk": "Role may require deeper API troubleshooting than the posting states.", "updatedAt": "2026-07-18"
+    },
+    {
+      "id": "demo-005", "employer": "Pine & Relay", "role": "Customer Success Operations Associate", "location": "Remote - Central", "arrangement": "Remote", "status": "research", "fit": "strong-match", "compensation": "$66k-$76k", "nextAction": "Confirm listing currency and source", "nextActionDate": "2026-07-24", "strongestMatch": "Customer workflow and reporting experience.", "largestGap": "CRM administration depth is not yet verified.", "risk": "Compensation range comes from a repost and needs source confirmation.", "updatedAt": "2026-07-21"
+    },
+    {
+      "id": "demo-006", "employer": "Atlas Grove", "role": "Enterprise Program Manager", "location": "New York, NY", "arrangement": "On-site", "status": "rejected", "fit": "not-recommended", "compensation": "$118k-$140k", "nextAction": "Archive and record lesson", "nextActionDate": "2026-07-28", "strongestMatch": "General cross-functional coordination.", "largestGap": "Five years of enterprise program ownership is central and unverified.", "risk": "Role, location, and seniority conflict with the verified search direction.", "updatedAt": "2026-07-16"
+    },
+    {
+      "id": "demo-007", "employer": "Bright Acre", "role": "Implementation Operations Lead", "location": "Remote - US", "arrangement": "Remote", "status": "offer", "fit": "strong-match", "compensation": "$82k-$92k", "nextAction": "Compare offer terms against priorities", "nextActionDate": "2026-07-26", "strongestMatch": "Implementation process ownership and measurable handoff improvement.", "largestGap": "People-management scope remains unclear.", "risk": "On-call expectations must be resolved before a decision.", "updatedAt": "2026-07-21"
+    }
+  ]
+}
