@@ -2,13 +2,17 @@
 
 Career HQ turns a cloned GitHub repository into a private, local job-search operating system for Codex. Codex provides the guided workflow and automation; deterministic local scripts enforce evidence, privacy, approval, and tracking rules; the dashboard reads the resulting local JSON files.
 
-Nothing needs to be deployed. Each user gets a clean copy of the system and creates their own ignored `.job-search/` workspace.
+**New users:** open the [Career HQ setup website](https://career-hq-guide.magicalmongoose.chatgpt.site), copy its URL, and paste that URL into Codex. Codex will explain the project, ask where to create it, check the Windows prerequisites, and set up a clean local copy.
+
+The public website contains instructions and a fictional product preview only. Each user's real workflow runs in an independent local project and writes only to its ignored `.job-search/` workspace.
 
 ## Start here
 
-1. Clone or download this repository.
-2. Open the folder in Codex.
-3. Enter:
+1. Open [the public setup website](https://career-hq-guide.magicalmongoose.chatgpt.site).
+2. Copy the website link and paste it into a new Codex conversation.
+3. Confirm where Codex should create the local project.
+
+For a manual installation, clone or download this repository, open the folder in Codex, and enter:
 
 ```text
 $career-hq Set up my job search
@@ -29,6 +33,7 @@ GitHub repository                     Private local workspace
 ```
 
 - The repository supplies Codex instructions, workflow scripts, schemas, templates, tests, and the dashboard application.
+- `site/` supplies the public setup guide, machine-readable Codex instructions, and fictional interactive preview deployed through OpenAI Sites.
 - `.job-search/` contains one user's real profile, job ledger, posting snapshots, generated documents, approvals, and submission evidence.
 - The local dashboard reads `.job-search/applicant-profile.json` and `.job-search/applications.json` at request time. It does not copy them into source files or build output.
 - The server binds to `127.0.0.1`, so it is available only on the user's computer by default.
