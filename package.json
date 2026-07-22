@@ -12,7 +12,9 @@
     "build": "next build",
     "postbuild": "python scripts/privacy_scan.py . --release",
     "start": "next start -H 127.0.0.1",
-    "test": "npm run build && node --test tests/*.test.mjs && python -m unittest discover -s tests -p \"test_*.py\" && python scripts/privacy_scan.py . --release",
+    "site:build": "npm --prefix site run build",
+    "site:test": "npm --prefix site test",
+    "test": "npm run build && node --test tests/*.test.mjs && python -m unittest discover -s tests -p \"test_*.py\" && npm run site:test && python scripts/privacy_scan.py . --release && python scripts/privacy_scan.py site/dist --release",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "typecheck": "tsc --noEmit"
   },

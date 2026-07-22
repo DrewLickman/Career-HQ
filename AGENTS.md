@@ -6,12 +6,15 @@ Career HQ is a reusable, local Codex operating system:
 - Each user's real workflow writes only to `.job-search/`, which is private, local, and ignored by Git.
 - The dashboard may read `.job-search/applicant-profile.json` and `.job-search/applications.json` only at local request time. It must never statically import, copy, cache, prerender, publish, or bundle private values.
 - `sample-data/` contains clearly fictional test fixtures only. It is not the dashboard's runtime data source.
+- `site/` contains the authorized public onboarding website. It may contain instructions and clearly fictional preview data only; it must never import from the local dashboard loader or `.job-search/`.
 
 ## Non-negotiable privacy boundary
 
 Never copy, redact, transform, import, or reference real applicant values in tracked source, fixtures, tests, screenshots, static output, build output, or release archives. Never store passwords, one-time codes, government identifiers, financial details, or medical information anywhere in Career HQ.
 
 Keep the dashboard server bound to a loopback address by default. Do not add hosting, cloud storage, telemetry, analytics, remote databases, or synchronization without explicit user authorization and a privacy review.
+
+The public `site/` application is the sole approved hosted surface. It must remain separate from the private dashboard and must not add authentication, forms, uploads, persistence, analytics, telemetry, or remote applicant storage.
 
 Before any commit or release, run:
 

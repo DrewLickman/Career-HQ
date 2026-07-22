@@ -76,7 +76,10 @@ def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
         if Path(relative).suffix.lower() in RESUME_SUFFIXES and not relative.startswith(("templates/", "sample-data/")):
             findings.append(f"tracked resume/document artifact outside an approved fixture/template path: {relative}")
 
-    for sensitive_surface in ("app", "dashboard", "public", "sample-data", ".next"):
+    for sensitive_surface in (
+        "app", "dashboard", "public", "sample-data", ".next",
+        "site/app", "site/public", "site/dist",
+    ):
         candidate = root / sensitive_surface / ".job-search"
         if candidate.exists():
             findings.append(f"private runtime folder inside public surface: {candidate.relative_to(root)}")
@@ -105,20 +108,23 @@ def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
             if denied and denied.casefold() in lowered:
                 findings.append(f"denied personal name in {relative}: {denied}")
 
-    if release and (root / ".next").exists():
+    if release:
         markers = private_build_markers(root)
-        for path in (root / ".next").rglob("*"):
-            if not path.is_file():
+        for build_root in (root / ".next", root / "site" / "dist"):
+            if not build_root.exists():
                 continue
-            if ".job-search" in path.relative_to(root / ".next").parts:
-                findings.append(f"private runtime file in local build: {path.relative_to(root)}")
-            if markers:
-                try:
-                    contents = path.read_bytes()
-                except OSError:
+            for path in build_root.rglob("*"):
+                if not path.is_file():
                     continue
-                if any(marker in contents for marker in markers):
-                    findings.append(f"private workspace value embedded in local build: {path.relative_to(root)}")
+                if ".job-search" in path.relative_to(build_root).parts:
+                    findings.append(f"private runtime file in release build: {path.relative_to(root)}")
+                if markers:
+                    try:
+                        contents = path.read_bytes()
+                    except OSError:
+                        continue
+                    if any(marker in contents for marker in markers):
+                        findings.append(f"private workspace value embedded in release build: {path.relative_to(root)}")
     return sorted(set(findings))
 
 
