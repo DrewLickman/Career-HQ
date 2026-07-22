@@ -1,7 +1,10 @@
 import { CareerDashboard } from "../dashboard/CareerDashboard";
-import type { DashboardFixture } from "../dashboard/types";
-import fixture from "../sample-data/applications.json";
+import { loadLocalDashboard } from "../dashboard/load-local-data";
 
-export default function Home() {
-  return <CareerDashboard fixture={fixture as DashboardFixture} />;
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export default async function Home() {
+  const dashboard = await loadLocalDashboard();
+  return <CareerDashboard dashboard={dashboard} />;
 }

@@ -1,13 +1,17 @@
 # Career HQ project rules
 
-Career HQ has two intentionally separate surfaces:
+Career HQ is a reusable, local Codex operating system:
 
-- The public web demo reads only `sample-data/`, whose contents must remain clearly fictional.
-- The real Codex workflow writes only to `.job-search/`, which is private, local, and ignored by Git.
+- The GitHub repository contains skills, scripts, schemas, templates, tests, and a local dashboard application.
+- Each user's real workflow writes only to `.job-search/`, which is private, local, and ignored by Git.
+- The dashboard may read `.job-search/applicant-profile.json` and `.job-search/applications.json` only at local request time. It must never statically import, copy, cache, prerender, publish, or bundle private values.
+- `sample-data/` contains clearly fictional test fixtures only. It is not the dashboard's runtime data source.
 
 ## Non-negotiable privacy boundary
 
-Never copy, redact, transform, import, or reference real applicant data in `app/`, `dashboard/`, `sample-data/`, `public/`, tests, screenshots, build output, or release archives. Never store passwords, one-time codes, government identifiers, financial details, or medical information anywhere in Career HQ.
+Never copy, redact, transform, import, or reference real applicant values in tracked source, fixtures, tests, screenshots, static output, build output, or release archives. Never store passwords, one-time codes, government identifiers, financial details, or medical information anywhere in Career HQ.
+
+Keep the dashboard server bound to a loopback address by default. Do not add hosting, cloud storage, telemetry, analytics, remote databases, or synchronization without explicit user authorization and a privacy review.
 
 Before any commit or release, run:
 
@@ -16,7 +20,7 @@ python scripts/privacy_scan.py . --release
 npm test
 ```
 
-The privacy scanner must pass against both the repository and `dist/`. `.job-search/`, generated personal materials, local environment files, and temporary browser/build artifacts must stay ignored.
+The privacy scanner must pass against both tracked/release files and the local `.next/` build. `.job-search/`, generated personal materials, local environment files, and temporary browser/build artifacts must stay ignored.
 
 ## Workflow rules
 
@@ -31,9 +35,7 @@ The privacy scanner must pass against both the repository and `dist/`. `.job-sea
 
 ## Validation
 
-Prefer finite verification: use `npm run build` and the test suite unless an
-interactive browser check truly requires a local server. Never launch `vinext`,
-Vite, Wrangler, `npx`, or Node directly as a persistent Career HQ server.
+Prefer finite verification with `npm run build` and the test suite. Never launch Next.js, Vite, Vinext, Wrangler, `npx`, npm, or Node directly as a persistent Career HQ server.
 
 If a local server is required, every agent must:
 
@@ -41,10 +43,9 @@ If a local server is required, every agent must:
 2. Record the guarded launch and reuse that server for the current verification pass.
 3. Keep the default 10-minute runtime and 2 GB process-tree memory ceilings unless using stricter values.
 4. Stop the wrapper before final handoff unless the user explicitly asked for a bounded server to remain running.
-5. Confirm the wrapper reports `treeStopped: true`, then audit that no Career HQ vinext, Vite, Wrangler, npm, or Node server process remains.
+5. Confirm the wrapper reports `treeStopped: true`, then audit that no Career HQ Next.js, Vinext, Vite, Wrangler, npm, or Node server process remains.
 
-The wrapper owns the complete Windows process tree with a kill-on-close Job
-Object. Do not bypass it, including during diagnostic reproduction.
+The wrapper owns the complete Windows process tree with a kill-on-close Job Object. Do not bypass it, including during diagnostic reproduction.
 
 Run these checks after meaningful changes:
 

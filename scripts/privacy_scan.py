@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -11,7 +12,7 @@ import sys
 from pathlib import Path
 
 
-SKIP_DIRS = {".git", "node_modules", ".next", ".vinext", ".wrangler", "coverage", "tmp", "work", "outputs", "__pycache__"}
+SKIP_DIRS = {".git", "node_modules", ".next", ".vinext", ".wrangler", "dist", "coverage", "tmp", "work", "outputs", "__pycache__"}
 TEXT_SUFFIXES = {".md", ".txt", ".json", ".yaml", ".yml", ".toml", ".ts", ".tsx", ".js", ".mjs", ".cjs", ".py", ".css", ".html", ".xml", ".csv"}
 RESUME_SUFFIXES = {".doc", ".docx", ".pdf", ".rtf", ".odt"}
 EMAIL = re.compile(r"\b[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})\b", re.IGNORECASE)
@@ -38,6 +39,33 @@ def iter_release_files(root: Path):
         yield path
 
 
+def private_build_markers(root: Path) -> list[bytes]:
+    markers: set[str] = set()
+    private_root = root / ".job-search"
+    for filename in ("applicant-profile.json", "applications.json"):
+        path = private_root / filename
+        if not path.is_file():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+
+        if filename == "applicant-profile.json":
+            identity = payload.get("identity", {}) if isinstance(payload, dict) else {}
+            candidates = list(identity.values()) if isinstance(identity, dict) else []
+        else:
+            applications = payload.get("applications", []) if isinstance(payload, dict) else []
+            candidates = [item.get(key) for item in applications if isinstance(item, dict) for key in ("employer", "role", "location")]
+
+        for candidate in candidates:
+            if isinstance(candidate, dict):
+                candidate = candidate.get("value")
+            if isinstance(candidate, str) and len(candidate.strip()) >= 4:
+                markers.add(candidate.strip())
+    return [marker.encode("utf-8") for marker in sorted(markers)]
+
+
 def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
     findings: list[str] = []
     tracked = tracked_files(root)
@@ -48,7 +76,7 @@ def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
         if Path(relative).suffix.lower() in RESUME_SUFFIXES and not relative.startswith(("templates/", "sample-data/")):
             findings.append(f"tracked resume/document artifact outside an approved fixture/template path: {relative}")
 
-    for sensitive_surface in ("app", "dashboard", "public", "sample-data", "dist"):
+    for sensitive_surface in ("app", "dashboard", "public", "sample-data", ".next"):
         candidate = root / sensitive_surface / ".job-search"
         if candidate.exists():
             findings.append(f"private runtime folder inside public surface: {candidate.relative_to(root)}")
@@ -77,10 +105,20 @@ def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
             if denied and denied.casefold() in lowered:
                 findings.append(f"denied personal name in {relative}: {denied}")
 
-    if release and (root / "dist").exists():
-        for path in (root / "dist").rglob("*"):
-            if path.is_file() and ".job-search" in path.parts:
-                findings.append(f"private runtime file in public build: {path.relative_to(root)}")
+    if release and (root / ".next").exists():
+        markers = private_build_markers(root)
+        for path in (root / ".next").rglob("*"):
+            if not path.is_file():
+                continue
+            if ".job-search" in path.relative_to(root / ".next").parts:
+                findings.append(f"private runtime file in local build: {path.relative_to(root)}")
+            if markers:
+                try:
+                    contents = path.read_bytes()
+                except OSError:
+                    continue
+                if any(marker in contents for marker in markers):
+                    findings.append(f"private workspace value embedded in local build: {path.relative_to(root)}")
     return sorted(set(findings))
 
 

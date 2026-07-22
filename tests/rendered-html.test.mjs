@@ -1,47 +1,76 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-  return worker.fetch(new Request("http://localhost/", { headers: { accept: "text/html" } }), {
-    ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
-  }, { waitUntil() {}, passThroughOnException() {} });
-}
+const REPO = fileURLToPath(new URL("..", import.meta.url));
+const GUARD = join(REPO, "scripts", "run-bounded-dev-server.ps1");
+const POWERSHELL = join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
 
-test("server-renders the Career HQ fictional dashboard", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-  const html = await response.text();
-  assert.match(html, /<title>Career HQ \| Private job search command center<\/title>/i);
-  assert.match(html, /Fictional data only/);
-  assert.match(html, /Pipeline health/);
-  assert.match(html, /Application tracker/);
-  assert.match(html, /Local by design/);
-  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
+test("local dashboard reads an ignored workspace at request time", { skip: process.platform !== "win32" }, () => {
+  const workspace = mkdtempSync(join(tmpdir(), "career-hq-dashboard-"));
+  const privateRoot = join(workspace, ".job-search");
+  const port = 31_000 + (process.pid % 1_000);
+  const url = `http://127.0.0.1:${port}/`;
+  mkdirSync(privateRoot);
+  writeFileSync(join(privateRoot, "applicant-profile.json"), JSON.stringify({
+    identity: { displayName: { value: "Local Test Candidate", source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
+    searchDirection: { targetRoles: { value: ["Local Systems Specialist"], source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
+  }));
+  writeFileSync(join(privateRoot, "applications.json"), JSON.stringify({
+    updatedAt: "2026-07-22T12:00:00Z",
+    applications: [{
+      id: "local-test-001", employer: "Local Test Systems", role: "Automation Specialist",
+      location: "Remote", arrangement: "Remote", status: "research", fit: "strong-match",
+      compensation: "Test range", nextAction: "Review local test posting", nextActionDate: "2026-07-23",
+      strongestMatch: "Verified test evidence", largestGap: "Test gap", risk: "Test risk", updatedAt: "2026-07-22",
+    }],
+  }));
+
+  try {
+    const result = spawnSync(POWERSHELL, [
+      "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUARD,
+      "-Command", `node node_modules/next/dist/bin/next start -H 127.0.0.1 -p ${port}`,
+      "-HealthUrl", url,
+      "-VerificationCommand", `node tests/verify-local-dashboard.mjs ${url}`,
+      "-HoldAfterReadySeconds", "0",
+      "-MaxRuntimeSeconds", "30",
+      "-MemoryLimitMB", "1024",
+    ], {
+      cwd: REPO,
+      encoding: "utf8",
+      timeout: 45_000,
+      env: { ...process.env, CAREER_HQ_WORKSPACE: workspace },
+    });
+    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+    assert.equal(result.status, 0, output);
+    assert.match(output, /"treeStopped":true/);
+    assert.match(output, /Local dashboard verification passed/);
+  } finally {
+    rmSync(workspace, { recursive: true, force: true });
+  }
 });
 
-test("public dashboard imports only the fictional fixture", async () => {
-  const [page, fixture, gitignore] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../sample-data/applications.json", import.meta.url), "utf8"),
-    readFile(new URL("../.gitignore", import.meta.url), "utf8"),
-  ]);
-  assert.match(page, /sample-data\/applications\.json/);
-  assert.doesNotMatch(page, /\.job-search/);
-  assert.equal(JSON.parse(fixture).fixture, true);
+test("dashboard source uses private local JSON instead of sample data", () => {
+  const page = readFileSync(join(REPO, "app", "page.tsx"), "utf8");
+  const loader = readFileSync(join(REPO, "dashboard", "load-local-data.ts"), "utf8");
+  const gitignore = readFileSync(join(REPO, ".gitignore"), "utf8");
+  assert.match(page, /dynamic = "force-dynamic"/);
+  assert.match(page, /loadLocalDashboard/);
+  assert.doesNotMatch(page, /sample-data/);
+  assert.match(loader, /\.job-search/);
+  assert.match(loader, /applicant-profile\.json/);
+  assert.match(loader, /applications\.json/);
   assert.match(gitignore, /^\/\.job-search\/$/m);
 });
 
-test("dashboard source includes accessible interaction and responsive cards", async () => {
-  const [component, css, globals] = await Promise.all([
-    readFile(new URL("../dashboard/CareerDashboard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../dashboard/dashboard.module.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-  ]);
+test("dashboard source includes accessible interaction and responsive cards", () => {
+  const component = readFileSync(join(REPO, "dashboard", "CareerDashboard.tsx"), "utf8");
+  const css = readFileSync(join(REPO, "dashboard", "dashboard.module.css"), "utf8");
+  const globals = readFileSync(join(REPO, "app", "globals.css"), "utf8");
   assert.match(component, /aria-pressed/);
   assert.match(component, /aria-live="polite"/);
   assert.match(component, /Search applications/);

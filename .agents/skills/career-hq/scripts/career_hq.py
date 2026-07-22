@@ -85,7 +85,6 @@ def paths_for(workspace: str) -> dict[str, Path]:
         "postings": root / "postings",
         "materials": root / "materials",
         "reviews": root / "review-packets",
-        "dashboard": root / "generated-dashboard-data",
     }
 
 
@@ -135,7 +134,7 @@ def find_resume_sources(workspace: Path) -> list[dict[str, Any]]:
 def cmd_init(args: argparse.Namespace) -> None:
     workspace = Path(args.workspace).resolve()
     paths = paths_for(args.workspace)
-    for key in ("root", "postings", "materials", "reviews", "dashboard"):
+    for key in ("root", "postings", "materials", "reviews"):
         paths[key].mkdir(parents=True, exist_ok=True)
     profile = load_json(paths["profile"], empty_profile())
     known = {source.get("sha256") for source in profile.get("sources", [])}
@@ -601,15 +600,6 @@ def cmd_update_status(args: argparse.Namespace) -> None:
     save_json(paths["applications"], ledger); print(json.dumps(application, indent=2))
 
 
-def cmd_dashboard_data(args: argparse.Namespace) -> None:
-    paths = paths_for(args.workspace); ledger = load_json(paths["applications"])
-    if ledger is None:
-        raise SystemExit("Run init first.")
-    payload = {"private": True, "generatedAt": now_iso(), "applications": ledger["applications"]}
-    output = paths["dashboard"] / "dashboard.json"; save_json(output, payload)
-    print(json.dumps({"output": str(output), "private": True, "applications": len(payload["applications"]), "publicFixtureUnchanged": True}, indent=2))
-
-
 def cmd_seed_fixture(args: argparse.Namespace) -> None:
     if args.confirmation != "I understand this is fictional demo data":
         raise SystemExit("Exact confirmation required: I understand this is fictional demo data")
@@ -663,7 +653,6 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("approve"); workspace(p); p.add_argument("--application-id", required=True); p.add_argument("--confirmation", required=True); p.set_defaults(func=cmd_approve)
     p = sub.add_parser("record-submission"); workspace(p); p.add_argument("--application-id", required=True); p.add_argument("--evidence-file"); p.add_argument("--follow-up-days", type=int); p.set_defaults(func=cmd_record_submission)
     p = sub.add_parser("update-status"); workspace(p); p.add_argument("--application-id", required=True); p.add_argument("--status", required=True); p.add_argument("--next-action"); p.add_argument("--next-action-date"); p.set_defaults(func=cmd_update_status)
-    p = sub.add_parser("dashboard-data"); workspace(p); p.set_defaults(func=cmd_dashboard_data)
     p = sub.add_parser("seed-fixture"); workspace(p); p.add_argument("--confirmation", required=True); p.set_defaults(func=cmd_seed_fixture)
     p = sub.add_parser("verify"); workspace(p); p.set_defaults(func=cmd_verify)
     return parser

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Command = 'node node_modules/vinext/dist/cli.js dev',
+    [string]$Command = 'node node_modules/next/dist/bin/next dev -H 127.0.0.1',
     [AllowEmptyString()]
     [string]$WorkingDirectory = '',
     [AllowEmptyString()]

@@ -1,11 +1,11 @@
 ---
 name: career-hq
-description: Set up and operate a private local job-search workspace; inspect resumes, guide applicant intake, evaluate current jobs, generate truthful tailored resumes, create review packets, enforce application-specific submission approval, and track follow-ups. Use for Career HQ setup, job evaluation, resume tailoring, application tracking, form answers, review, submission confirmation, and status updates in this repository.
+description: Operate Career HQ as a private local job-search system; inspect resumes, guide applicant intake, find and evaluate current jobs, generate truthful tailored resumes, create review packets, enforce application-specific submission approval, track follow-ups, and maintain the local dashboard. Use for Career HQ setup, job search, job evaluation, resume tailoring, application tracking, form answers, review, submission confirmation, dashboard updates, and status updates in this repository.
 ---
 
 # Career HQ
 
-Keep all real applicant data inside the ignored `.job-search/` directory. Never copy private values into the public demo, `sample-data/`, tests, screenshots, or build artifacts. Never store passwords, one-time codes, government identifiers, financial details, or medical information.
+Keep all real applicant data inside the ignored `.job-search/` directory. The local dashboard reads the profile and application ledger directly at request time; never copy private values into tracked source, `sample-data/`, tests, screenshots, static output, or build artifacts. Never store passwords, one-time codes, government identifiers, financial details, or medical information.
 
 ## Start or resume
 
@@ -16,6 +16,8 @@ For `$career-hq Set up my job search`:
 3. Explain the five intake passes: search direction, career evidence, application defaults, sensitive answers when relevant, and tracking preferences.
 4. Run `python scripts/career_hq.py questions --workspace .`.
 5. Ask only the returned unanswered questions. Never ask more than five in one message.
+
+After initialization, explain that `npm run dev` opens the private loopback-only dashboard. No hosting, export, or dashboard-data generation step is required.
 
 Record answers with `answer`. Include a source and verification date. Use `--correction` only after the user explicitly corrects an older fact; otherwise preserve differing values as unresolved conflicts.
 
@@ -38,5 +40,7 @@ Creating materials never authorizes submission. Run `review` and present its pac
 Never click or trigger final submission without explicit authorization for that application. Record `submitted` only with confirmation evidence. Without proof, run `record-submission` without evidence so the status becomes `submission-unconfirmed`.
 
 Default follow-up to seven calendar days after confirmed submission unless the employer supplied another timeline. Terminal statuses must have no active follow-up.
+
+The application ledger is the dashboard source of truth. After changing profile or application state, tell the user to refresh the local dashboard if it is already open.
 
 Read `references/data-schema.md` for field semantics and `references/privacy-and-approval.md` before handling sensitive answers or submission state.

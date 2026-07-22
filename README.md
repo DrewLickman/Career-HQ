@@ -1,47 +1,53 @@
 # Career HQ
 
-Career HQ is a private, local-first Codex workspace for truthful job applications. It combines guided onboarding, immutable job-posting snapshots, fit analysis, versioned DOCX/PDF resumes, approval gates, follow-up tracking, and a polished dashboard.
+Career HQ turns a cloned GitHub repository into a private, local job-search operating system for Codex. Codex provides the guided workflow and automation; deterministic local scripts enforce evidence, privacy, approval, and tracking rules; the dashboard reads the resulting local JSON files.
 
-The hosted dashboard is a fictional product preview. It cannot run local Codex skills or access your private files.
+Nothing needs to be deployed. Each user gets a clean copy of the system and creates their own ignored `.job-search/` workspace.
 
 ## Start here
 
-Open this cloned folder in Codex and run:
+1. Clone or download this repository.
+2. Open the folder in Codex.
+3. Enter:
 
 ```text
 $career-hq Set up my job search
 ```
 
-Career HQ will inspect available resume sources, initialize `.job-search/`, explain the intake passes, and ask no more than five unanswered questions at once.
+Codex inspects available resume sources, initializes the private workspace, explains the intake passes, and asks no more than five unanswered questions at a time. After onboarding, ask Codex to find current jobs, evaluate fit, prepare truthful materials, guide reviews, and track outcomes.
+
+## What runs where
+
+```text
+GitHub repository                     Private local workspace
+├── .agents/skills/career-hq/   --->  ├── applicant-profile.json
+├── scripts/                          ├── applications.json
+├── app/ local dashboard              ├── postings/
+├── dashboard/                        ├── materials/
+├── templates/                        └── review-packets/
+└── sample-data/ test fixtures              .job-search/ (Git ignored)
+```
+
+- The repository supplies Codex instructions, workflow scripts, schemas, templates, tests, and the dashboard application.
+- `.job-search/` contains one user's real profile, job ledger, posting snapshots, generated documents, approvals, and submission evidence.
+- The local dashboard reads `.job-search/applicant-profile.json` and `.job-search/applications.json` at request time. It does not copy them into source files or build output.
+- The server binds to `127.0.0.1`, so it is available only on the user's computer by default.
 
 ## Local setup
 
-1. Install Node.js 22.13 or newer and Python 3.11 or newer.
-2. Run `npm install`.
-3. Run `python -m pip install -r requirements.txt` for resume generation.
-4. Run `npm run dev` to open the fictional dashboard demo. The guarded server
-   stops after 10 minutes and at 2 GB of process-tree private memory.
+Install Node.js 20.9 or newer and Python 3.11 or newer, then run:
 
-For a finite startup/health check, run `npm run dev:check`. Prefer `npm run
-build` and `npm test` when an interactive server is unnecessary. All development
-server launches use a Windows Job Object that terminates the full process tree
-on completion, failure, timeout, or wrapper interruption.
-
-Private data is written only to `.job-search/`:
-
-```text
-.job-search/
-  applicant-profile.json
-  applications.json
-  postings/
-  materials/
-  review-packets/
-  generated-dashboard-data/
+```powershell
+npm install
+python -m pip install -r requirements.txt
+npm run dev
 ```
 
-The whole folder is ignored by Git and excluded from the public build. Do not move its contents into `sample-data/`.
+Open `http://127.0.0.1:3000`. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Run `npm run dev:check` for a finite startup check.
 
-## Core commands
+The dashboard shows a setup instruction until Codex initializes `.job-search/`. After that, refresh the page whenever Codex updates the local ledger; no export or sync command is required.
+
+## Core workflow commands
 
 ```powershell
 python scripts/career_hq.py init --workspace .
@@ -51,24 +57,19 @@ python scripts/career_hq.py prepare-resume --help
 python scripts/career_hq.py review --help
 python scripts/career_hq.py approve --help
 python scripts/career_hq.py record-submission --help
-python scripts/career_hq.py dashboard-data --workspace .
+python scripts/career_hq.py verify --workspace .
 ```
 
-`prepare-resume` never uses unverified claims. `approve` requires application-specific wording. `record-submission` records `submitted` only when confirmation evidence is supplied; otherwise it records `submission-unconfirmed`.
+Codex normally runs these commands as it guides the user. `prepare-resume` accepts only verified claims. Creating materials never authorizes submission. `approve` requires authorization for one named application, and `record-submission` records `submitted` only with confirmation evidence.
 
-## Refresh the tracker
+## Sharing safely
 
-Run `python scripts/career_hq.py dashboard-data --workspace .`. This creates a private local dashboard payload under `.job-search/generated-dashboard-data/`; it never replaces the fictional public fixture automatically.
-
-## Privacy and release checks
+Run these before committing or sharing changes:
 
 ```powershell
+python scripts/career_hq.py verify --workspace .
 python scripts/privacy_scan.py . --release
 npm test
 ```
 
-The scanner rejects private runtime folders in release inputs or outputs, non-fixture personal contact patterns, local absolute user paths, and tracked resume artifacts outside approved template/fixture locations.
-
-## Sharing
-
-Share the repository or publish it as a GitHub template only after the privacy and test commands pass. A fresh clone starts with no applicant data. Real application submission remains a user-controlled action and always requires explicit authorization for the specific application.
+Share the GitHub repository, not `.job-search/`. A fresh clone contains no applicant data. Fictional `sample-data/` files exist only as test and workflow fixtures; the dashboard does not import them.

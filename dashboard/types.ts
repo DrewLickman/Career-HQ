@@ -21,9 +21,11 @@ export type Application = {
   updatedAt: string;
 };
 
-export type DashboardFixture = {
-  fixture: true;
+export type DashboardData = {
+  private: true;
+  workspaceStatus: "needs-setup" | "ready" | "error";
   applicant: { displayName: string; targetLane: string };
   generatedAt: string;
   applications: Application[];
+  message?: string;
 };
