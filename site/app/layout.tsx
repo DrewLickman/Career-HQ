@@ -1,6 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1320" },
+  ],
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -11,13 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const socialImage = new URL("/og.png", `${protocol}://${host}`).toString();
 
   return {
-    title: "Career HQ | Your private job search, set up by Codex",
-    description: "Share one website with Codex to create a private, local-first system for truthful job applications, tailored materials, and follow-ups.",
+    title: "Career HQ | Private job-search system for Windows",
+    description: "Give this setup guide to Codex to install a private Career HQ workspace for verified profiles, job evaluation, truthful application materials, approvals, and follow-ups.",
     openGraph: {
       title: "Career HQ",
-      description: "Your private job search, set up by Codex.",
+      description: "Set up a private job-search system on your Windows PC.",
       type: "website",
-      images: [{ url: socialImage, width: 1731, height: 909, alt: "Career HQ — Your private job search, set up by Codex." }],
+      images: [{ url: socialImage, width: 1728, height: 910, alt: "CHQ — Set up a private job-search system on your Windows PC." }],
     },
     twitter: { card: "summary_large_image", images: [socialImage] },
     icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },

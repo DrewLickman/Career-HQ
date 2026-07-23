@@ -20,14 +20,16 @@ test("server-renders the public Career HQ setup guide", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Career HQ \| Your private job search, set up by Codex<\/title>/i);
-  assert.match(html, /Your private job search/);
-  assert.match(html, /set up by Codex/);
-  assert.match(html, /Copy website link/);
-  assert.match(html, /Codex handles the setup/);
+  assert.match(html, /<title>Career HQ \| Private job-search system for Windows<\/title>/i);
+  assert.match(html, /Set up a private job-search system on your Windows PC/);
+  assert.match(html, /This page is the setup handoff—not the job-search app/);
+  assert.match(html, /Copy setup link/);
+  assert.match(html, /Four steps from this page to your private dashboard/);
+  assert.match(html, /Career HQ is not a job board and it is not an auto-apply bot/);
+  assert.match(html, />CHQ</);
   assert.match(html, /Fictional data only/);
-  assert.match(html, /Personal data stays local/);
-  assert.match(html, /Creating materials never authorizes submission/);
+  assert.match(html, /Private records remain on your PC/);
+  assert.match(html, /Creating application materials never authorizes submission/);
   assert.match(html, /https:\/\/github\.com\/DrewLickman\/Career-HQ/);
   assert.doesNotMatch(html, /codex-preview/);
   assert.doesNotMatch(html, /react-loading-skeleton/);
@@ -63,8 +65,9 @@ test("keeps the hosted surface static and free of private-data features", async 
   ]);
 
   assert.match(page, /Fictional data only/);
+  assert.match(page, /visibleApplications\.find\(\(application\) => application\.id === selectedId\)/);
   assert.doesNotMatch(page, /readFile|node:fs|loadLocalDashboard|sample-data/);
   assert.doesNotMatch(page, /<form|type=["']file|fetch\(|localStorage|sessionStorage/);
-  assert.match(layout, /Career HQ \| Your private job search/);
+  assert.match(layout, /Career HQ \| Private job-search system for Windows/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton|drizzle/);
 });
