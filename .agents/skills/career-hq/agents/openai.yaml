@@ -1,4 +1,4 @@
 interface:
   display_name: "Career HQ"
-  short_description: "Private local Codex job-search system"
-  default_prompt: "Use $career-hq to set up and operate my private local job search."
+  short_description: "Guided private job-search workflow"
+  default_prompt: "Use $career-hq to guide me through my private job search one step at a time."

@@ -10,6 +10,14 @@ Every material profile value uses:
 
 Claims with `verified: false`, missing sources, or unresolved conflicts cannot enter generated materials.
 
+## Mailing address
+
+Store a mailing address only in private `.job-search/applicant-profile.json` as
+`identity.mailingAddress`. Its evidence `value` is either `null` when the user
+defers or an object with `addressLine1`, optional `addressLine2`, `city`,
+`region`, `postalCode`, and `country`. Use it only to fill a job application the
+user has authorized.
+
 ## Applications
 
 Statuses: `research`, `ready`, `applied`, `assessment`, `interview`, `offer`, `rejected`, `withdrawn`, `closed`, `submission-unconfirmed`, and `submitted`.

@@ -4,7 +4,7 @@ param(
     [AllowEmptyString()]
     [string]$WorkingDirectory = '',
     [AllowEmptyString()]
-    [string]$HealthUrl = 'http://localhost:3000/',
+    [string]$HealthUrl = 'http://127.0.0.1:3000/',
     [ValidateRange(1, 3600)]
     [int]$ReadyTimeoutSeconds = 90,
     [ValidateRange(1, 3600)]
@@ -18,7 +18,8 @@ param(
     [AllowEmptyString()]
     [string]$VerificationCommand = '',
     [ValidateRange(1, 3600)]
-    [int]$VerificationTimeoutSeconds = 120
+    [int]$VerificationTimeoutSeconds = 120,
+    [switch]$OpenBrowser
 )
 
 Set-StrictMode -Version Latest
@@ -388,6 +389,25 @@ $errorMessage = $null
 $ready = [string]::IsNullOrWhiteSpace($HealthUrl)
 $readyAtSeconds = if ($ready) { 0.0 } else { $null }
 $verificationStartedAtSeconds = $null
+$browserOpened = $false
+
+if ($OpenBrowser -and -not [string]::IsNullOrWhiteSpace($HealthUrl)) {
+    try {
+        $existingResponse = Invoke-WebRequest -Uri $HealthUrl -Method Get -TimeoutSec 2 -UseBasicParsing
+        if (
+            $existingResponse.StatusCode -ge 200 -and
+            $existingResponse.StatusCode -lt 500 -and
+            $existingResponse.Content -match '<title>Career HQ'
+        ) {
+            Start-Process $HealthUrl
+            Write-Output 'Career HQ is already running. The dashboard was opened in your browser.'
+            exit 0
+        }
+    }
+    catch {
+        # No verified Career HQ dashboard is currently listening. Start one below.
+    }
+}
 
 try {
     $serverJob = New-GuardedCommand -CommandText $Command -Directory $resolvedWorkingDirectory -HardMemoryLimitBytes $hardMemoryLimitBytes
@@ -423,6 +443,10 @@ try {
                     $ready = $true
                     $readyAtSeconds = $elapsedSeconds
                     $readyPrivateBytes = $privateBytes
+                    if ($OpenBrowser -and -not $browserOpened) {
+                        Start-Process $HealthUrl
+                        $browserOpened = $true
+                    }
                 }
             }
             catch {
@@ -518,6 +542,7 @@ $summary = [ordered]@{
     peakMemoryMB = [Math]::Round($peakPrivateBytes / 1MB, 2)
     memoryGrowthMB = $memoryGrowthMB
     memoryLimitMB = $MemoryLimitMB
+    browserOpened = $browserOpened
     terminationReason = $terminationReason
     exitStatus = $wrapperExitStatus
     treeStopped = $treeStopped

@@ -41,6 +41,17 @@ def iter_release_files(root: Path):
 
 def private_build_markers(root: Path) -> list[bytes]:
     markers: set[str] = set()
+
+    def add_strings(value) -> None:
+        if isinstance(value, str) and len(value.strip()) >= 4:
+            markers.add(value.strip())
+        elif isinstance(value, dict):
+            for nested in value.values():
+                add_strings(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                add_strings(nested)
+
     private_root = root / ".job-search"
     for filename in ("applicant-profile.json", "applications.json"):
         path = private_root / filename
@@ -53,16 +64,32 @@ def private_build_markers(root: Path) -> list[bytes]:
 
         if filename == "applicant-profile.json":
             identity = payload.get("identity", {}) if isinstance(payload, dict) else {}
-            candidates = list(identity.values()) if isinstance(identity, dict) else []
+            candidates = []
+            if isinstance(identity, dict):
+                name = identity.get("legalName") or identity.get("displayName")
+                candidates.append(name)
+                for key in ("email", "phone", "location"):
+                    candidates.append(identity.get(key))
+                address = identity.get("mailingAddress")
+                if isinstance(address, dict) and "value" in address:
+                    address = address.get("value")
+                if isinstance(address, dict):
+                    candidates.extend(
+                        address.get(key)
+                        for key in ("addressLine1", "addressLine2", "postalCode")
+                    )
         else:
             applications = payload.get("applications", []) if isinstance(payload, dict) else []
-            candidates = [item.get(key) for item in applications if isinstance(item, dict) for key in ("employer", "role", "location")]
+            candidates = [
+                item.get("employer")
+                for item in applications
+                if isinstance(item, dict)
+            ]
 
         for candidate in candidates:
-            if isinstance(candidate, dict):
+            if isinstance(candidate, dict) and "value" in candidate:
                 candidate = candidate.get("value")
-            if isinstance(candidate, str) and len(candidate.strip()) >= 4:
-                markers.add(candidate.strip())
+            add_strings(candidate)
     return [marker.encode("utf-8") for marker in sorted(markers)]
 
 
@@ -77,7 +104,7 @@ def scan(root: Path, denied_names: list[str], release: bool) -> list[str]:
             findings.append(f"tracked resume/document artifact outside an approved fixture/template path: {relative}")
 
     for sensitive_surface in (
-        "app", "dashboard", "public", "sample-data", ".next",
+        "app", "dashboard", "src/app", "src/dashboard", "public", "sample-data", ".next",
         "site/app", "site/public", "site/dist",
     ):
         candidate = root / sensitive_surface / ".job-search"

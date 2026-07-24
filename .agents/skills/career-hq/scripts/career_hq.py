@@ -27,6 +27,12 @@ STATUSES = {
 }
 TERMINAL = {"rejected", "withdrawn", "closed"}
 QUESTIONS = [
+    (
+        "identity",
+        "identity.mailingAddress",
+        "What mailing address should Career HQ use for authorized job applications? "
+        "Include street, city, state or province, postal code, and country. You may skip this for now.",
+    ),
     ("search-direction", "searchDirection.targetRoles", "Which role titles should Career HQ prioritize?"),
     ("search-direction", "searchDirection.avoidedRoles", "Which roles should it avoid?"),
     ("search-direction", "searchDirection.geography", "What locations and maximum commute work for you?"),
@@ -189,12 +195,32 @@ def parse_value(raw: str) -> Any:
         return raw
 
 
+def validate_answer(field: str, proposed: Any) -> None:
+    if field != "identity.mailingAddress" or proposed is None:
+        return
+    required = ("addressLine1", "city", "region", "postalCode", "country")
+    if not isinstance(proposed, dict):
+        raise SystemExit(
+            "identity.mailingAddress must be a JSON object with addressLine1, city, "
+            "region, postalCode, and country."
+        )
+    missing = [
+        key for key in required
+        if not isinstance(proposed.get(key), str) or not proposed[key].strip()
+    ]
+    if missing:
+        raise SystemExit(
+            "identity.mailingAddress is missing required fields: " + ", ".join(missing)
+        )
+
+
 def cmd_answer(args: argparse.Namespace) -> None:
     paths = paths_for(args.workspace)
     profile = load_json(paths["profile"])
     if profile is None:
         raise SystemExit("Run init first.")
     proposed = parse_value(args.value)
+    validate_answer(args.field, proposed)
     existing = get_nested(profile, args.field)
     evidence = {
         "value": proposed,
@@ -547,12 +573,18 @@ def cmd_review(args: argparse.Namespace) -> None:
     }
     packet_path = paths["reviews"] / f"{application['id']}-review-{datetime.now().strftime('%Y%m%dT%H%M%S')}.json"
     save_json(packet_path, packet); application["reviewPacket"] = packet_path.relative_to(paths["root"]).as_posix(); application["nextAction"] = "Resolve questions and obtain application-specific submission authorization."; save_json(paths["applications"], ledger)
-    print(json.dumps({"packet": str(packet_path), "review": packet, "requiredApproval": f"I authorize submission for {application['id']}"}, indent=2))
+    confirmation = f"I authorize submission to {application['employer']} for {application['role']}"
+    print(json.dumps({
+        "packet": str(packet_path),
+        "review": packet,
+        "displayName": f"{application['employer']} \u2014 {application['role']}",
+        "requiredApproval": confirmation,
+    }, indent=2))
 
 
 def cmd_approve(args: argparse.Namespace) -> None:
     paths = paths_for(args.workspace); ledger = load_json(paths["applications"]); application = find_application(ledger, args.application_id)
-    expected = f"I authorize submission for {application['id']}"
+    expected = f"I authorize submission to {application['employer']} for {application['role']}"
     if args.confirmation != expected:
         raise SystemExit(f"Exact application-specific confirmation required: {expected}")
     if not application.get("reviewPacket") or application.get("unresolvedQuestions"):

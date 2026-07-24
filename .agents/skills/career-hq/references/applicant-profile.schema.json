@@ -6,7 +6,13 @@
   "required": ["schemaVersion", "identity", "searchDirection", "skills", "experience", "sources", "conflicts"],
   "properties": {
     "schemaVersion": { "const": 1 },
-    "identity": { "type": "object" },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "mailingAddress": { "$ref": "#/$defs/mailingAddressEvidence" }
+      },
+      "additionalProperties": true
+    },
     "searchDirection": { "type": "object" },
     "skills": { "type": "array" },
     "experience": { "type": "array" },
@@ -22,6 +28,34 @@
         "value": {}, "source": { "type": "string", "minLength": 1 },
         "verifiedAt": { "type": "string", "format": "date" }, "verified": { "type": "boolean" }
       }
+    },
+    "mailingAddressEvidence": {
+      "type": "object",
+      "required": ["value", "source", "verifiedAt", "verified"],
+      "properties": {
+        "value": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["addressLine1", "city", "region", "postalCode", "country"],
+              "properties": {
+                "addressLine1": { "type": "string", "minLength": 1 },
+                "addressLine2": { "type": "string" },
+                "city": { "type": "string", "minLength": 1 },
+                "region": { "type": "string", "minLength": 1 },
+                "postalCode": { "type": "string", "minLength": 1 },
+                "country": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "verifiedAt": { "type": "string", "format": "date" },
+        "verified": { "type": "boolean" }
+      },
+      "additionalProperties": false
     }
   }
 }

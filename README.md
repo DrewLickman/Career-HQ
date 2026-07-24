@@ -20,7 +20,7 @@ The public guide helps a new user install Career HQ. It is not the working dashb
 1. Open the public [Career HQ setup guide](https://career-hq-guide.magicalmongoose.chatgpt.site/). Do not expect to see your applications there.
 2. Copy the website link and paste it into a new Codex conversation.
 3. Confirm where Codex should create the local project.
-4. After setup, use the private [local dashboard](http://127.0.0.1:3000) for your real job search.
+4. After setup, double-click **START CAREER HQ.bat** to open the private local dashboard.
 
 For a manual installation, clone or download this repository, open the folder in Codex, and enter:
 
@@ -34,12 +34,12 @@ Codex inspects available resume sources, initializes the private workspace, expl
 
 ```text
 GitHub repository                     Private local workspace
-├── .agents/skills/career-hq/   --->  ├── applicant-profile.json
-├── scripts/                          ├── applications.json
-├── app/ local dashboard              ├── postings/
-├── dashboard/                        ├── materials/
+├── START CAREER HQ.bat         --->  ├── applicant-profile.json
+├── src/ local dashboard              ├── applications.json
+├── site/ public setup guide          ├── postings/
+├── scripts/ workflow tools           ├── materials/
 ├── templates/                        └── review-packets/
-└── sample-data/ test fixtures              .job-search/ (Git ignored)
+└── sample-data/ fictional tests            .job-search/ (Git ignored)
 ```
 
 - The repository supplies Codex instructions, workflow scripts, schemas, templates, tests, and the dashboard application.
@@ -55,10 +55,11 @@ Install Node.js 20.9 or newer and Python 3.11 or newer, then run:
 ```powershell
 npm install
 python -m pip install -r requirements.txt
-npm run dev
 ```
 
-Open the private local dashboard at [http://127.0.0.1:3000](http://127.0.0.1:3000). This address is separate from the public setup guide and works only on the computer running Career HQ. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Run `npm run dev:check` for a finite startup check.
+Then double-click **START CAREER HQ.bat** at the top level of the project folder. It starts the guarded local server and opens the private dashboard automatically at [http://127.0.0.1:3000](http://127.0.0.1:3000).
+
+This address is separate from the public setup guide and works only on the computer running Career HQ. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Developers can still use `npm run dev`; use `npm run dev:check` for a finite startup check.
 
 The dashboard shows a setup instruction until Codex initializes `.job-search/`. After that, refresh the page whenever Codex updates the local ledger; no export or sync command is required.
 

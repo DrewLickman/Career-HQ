@@ -110,8 +110,8 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
 });
 
 test("dashboard source uses private local JSON instead of sample data", () => {
-  const page = readFileSync(join(REPO, "app", "page.tsx"), "utf8");
-  const loader = readFileSync(join(REPO, "dashboard", "load-local-data.ts"), "utf8");
+  const page = readFileSync(join(REPO, "src", "app", "page.tsx"), "utf8");
+  const loader = readFileSync(join(REPO, "src", "dashboard", "load-local-data.ts"), "utf8");
   const gitignore = readFileSync(join(REPO, ".gitignore"), "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
   assert.match(page, /loadLocalDashboard/);
@@ -124,18 +124,23 @@ test("dashboard source uses private local JSON instead of sample data", () => {
 
 test("README clearly separates the public guide from the private local dashboard", () => {
   const readme = readFileSync(join(REPO, "README.md"), "utf8");
+  const launcher = readFileSync(join(REPO, "START CAREER HQ.bat"), "utf8");
   assert.match(readme, /## Two Career HQ websites/);
   assert.match(readme, /\[Public setup guide\]\(https:\/\/career-hq-guide\.magicalmongoose\.chatgpt\.site\/\)/);
   assert.match(readme, /\[Private local dashboard\]\(http:\/\/127\.0\.0\.1:3000\)/);
   assert.match(readme, /never receives applicant data/i);
   assert.match(readme, /works only on the user's computer/i);
+  assert.match(readme, /START CAREER HQ\.bat/);
+  assert.match(launcher, /run-bounded-dev-server\.ps1/);
+  assert.match(launcher, /-OpenBrowser/);
+  assert.match(launcher, /--check/);
 });
 
 test("dashboard source includes accessible interaction and responsive cards", () => {
-  const layout = readFileSync(join(REPO, "app", "layout.tsx"), "utf8");
-  const component = readFileSync(join(REPO, "dashboard", "CareerDashboard.tsx"), "utf8");
-  const css = readFileSync(join(REPO, "dashboard", "dashboard.module.css"), "utf8");
-  const globals = readFileSync(join(REPO, "app", "globals.css"), "utf8");
+  const layout = readFileSync(join(REPO, "src", "app", "layout.tsx"), "utf8");
+  const component = readFileSync(join(REPO, "src", "dashboard", "CareerDashboard.tsx"), "utf8");
+  const css = readFileSync(join(REPO, "src", "dashboard", "dashboard.module.css"), "utf8");
+  const globals = readFileSync(join(REPO, "src", "app", "globals.css"), "utf8");
   assert.match(layout, /<html[^>]+suppressHydrationWarning/);
   assert.match(component, /aria-pressed/);
   assert.match(component, /aria-live="polite"/);

@@ -4,7 +4,19 @@
   "identity": {
     "displayName": { "value": "Avery Rowan", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
     "email": { "value": "avery.rowan@example.test", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
-    "location": { "value": "Madison, WI", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true }
+    "location": { "value": "Madison, WI", "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
+    "mailingAddress": {
+      "value": {
+        "addressLine1": "100 Fictional Way",
+        "city": "Madison",
+        "region": "WI",
+        "postalCode": "00000",
+        "country": "United States"
+      },
+      "source": "fictional-fixture",
+      "verifiedAt": "2026-07-01",
+      "verified": true
+    }
   },
   "searchDirection": {
     "targetRoles": { "value": ["Implementation Specialist", "Customer Success Operations", "Technical Project Coordinator"], "source": "fictional-fixture", "verifiedAt": "2026-07-01", "verified": true },
