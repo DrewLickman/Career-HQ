@@ -25,9 +25,13 @@ test("server-renders the public Career HQ setup guide", async () => {
   assert.match(html, /This page is the setup handoff—not the job-search app/);
   assert.match(html, /Copy setup link/);
   assert.match(html, /Four steps from this page to your private dashboard/);
-  assert.match(html, /Career HQ is not a job board and it is not an auto-apply bot/);
+  assert.match(html, /Career HQ is not a job board or an auto-apply bot/);
   assert.match(html, />CHQ</);
   assert.match(html, /Fictional data only/);
+  assert.match(html, />Active</);
+  assert.match(html, />Closed</);
+  assert.match(html, /4 active .* 1 closed/);
+  assert.match(html, /Latest materials/);
   assert.match(html, /Private records remain on your PC/);
   assert.match(html, /Creating application materials never authorizes submission/);
   assert.match(html, /https:\/\/github\.com\/DrewLickman\/Career-HQ/);

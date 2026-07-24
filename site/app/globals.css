@@ -210,43 +210,47 @@ code { font-family: "Cascadia Code", Consolas, monospace; font-size: .94em; }
 .local-card p { margin: 8px 0 0; color: #9ba9bc; font-size: 8px; line-height: 1.5; }
 .dashboard-main { min-width: 0; padding: 31px; }
 .dashboard-title { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-.dashboard-title small { color: var(--signal-strong); font-size: 8px; font-weight: 850; letter-spacing: .12em; }
+.dashboard-title small { color: var(--signal-strong); font-size: 10px; font-weight: 850; letter-spacing: .12em; }
 .dashboard-title h3 { margin: 7px 0 0; font-size: clamp(24px, 3vw, 40px); line-height: 1.08; font-weight: 760; letter-spacing: -.045em; }
-.dashboard-title > span { color: var(--muted); font-size: 9px; }
+.dashboard-title > span { color: var(--muted); font-size: 11px; }
 .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
 .metrics-row div { padding: 20px; border-right: 1px solid var(--line); }
 .metrics-row div:first-child { padding-left: 0; }
 .metrics-row div:last-child { border-right: 0; }
-.metrics-row small, .metrics-row span { display: block; color: var(--muted); font-size: 8px; }
+.metrics-row small, .metrics-row span { display: block; color: var(--muted); font-size: 10px; }
 .metrics-row strong { display: block; margin: 6px 0 4px; font-size: 27px; font-weight: 760; }
 .filter-row { display: flex; gap: 7px; padding: 18px 0 12px; overflow-x: auto; }
-.filter-row button { border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; background: var(--card); color: var(--muted); cursor: pointer; font-size: 8px; font-weight: 800; }
+.filter-row button { min-height: 34px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: var(--card); color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 800; }
 .filter-row .filter-active { background: var(--signal); border-color: var(--signal); color: white; }
 .application-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, .6fr); gap: 13px; }
 .application-list { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; align-self: start; }
-.application-row { width: 100%; min-height: 73px; padding: 10px; display: grid; grid-template-columns: 32px minmax(145px, 1.25fr) minmax(95px, .65fr) minmax(105px, .8fr); align-items: center; gap: 9px; border: 0; border-bottom: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; text-align: left; }
+.application-row { width: 100%; min-height: 80px; padding: 12px; display: grid; grid-template-columns: 32px minmax(145px, 1.25fr) minmax(95px, .65fr) minmax(105px, .8fr); align-items: center; gap: 10px; border: 0; border-bottom: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; text-align: left; }
 .application-row:last-child { border-bottom: 0; }
 .application-row:hover, .selected-row { background: var(--signal-soft); box-shadow: inset 3px 0 var(--signal); }
 .company-mark { width: 30px; height: 30px; border-radius: 7px; background: var(--section-soft); color: var(--muted); font-size: 8px; }
-.app-identity b, .app-action b { display: block; font-size: 9px; line-height: 1.35; }
-.app-identity small, .app-action small { display: block; margin-top: 4px; color: var(--muted); font-size: 7px; }
-.fit-badge { justify-self: start; padding: 5px 7px; border-radius: 999px; font-size: 7px; font-weight: 850; white-space: nowrap; }
+.app-identity b, .app-action b { display: block; font-size: 11px; line-height: 1.35; }
+.app-identity small, .app-action small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+.fit-badge { justify-self: start; padding: 5px 7px; border-radius: 999px; font-size: 9px; font-weight: 850; white-space: nowrap; }
 .fit-badge.strong { background: var(--signal-soft); color: var(--signal-strong); }
 .fit-badge.stretch { background: var(--blue); color: #23566f; }
 .application-detail { padding: 17px; border-radius: 11px; background: var(--nav); color: var(--on-dark); align-self: start; }
-.detail-kicker { margin: 0; color: #a8a1ff; font-size: 7px; text-transform: uppercase; letter-spacing: .1em; }
+.detail-kicker { margin: 0; color: #bdb8ff; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
 .application-detail h4 { margin: 10px 0 3px; font-size: 20px; line-height: 1.15; font-weight: 760; }
-.application-detail > p:not(.detail-kicker) { margin: 0; color: var(--on-dark-muted); font-size: 8px; }
+.application-detail > p:not(.detail-kicker) { margin: 0; color: var(--on-dark-muted); font-size: 10px; }
 .application-detail dl { margin: 16px 0; display: grid; grid-template-columns: 1fr 1fr; border-block: 1px solid #344055; }
 .application-detail dl div { padding: 11px 5px; }
-.application-detail dt { color: #91a0b5; font-size: 7px; }
-.application-detail dd { margin: 4px 0 0; font-size: 8px; }
+.application-detail dt { color: #aebbd0; font-size: 9px; }
+.application-detail dd { margin: 4px 0 0; font-size: 10px; }
 .assessment { margin-top: 12px; padding-left: 9px; border-left: 2px solid #56647a; }
-.assessment span { color: #91a0b5; font-size: 7px; text-transform: uppercase; }
-.assessment p { margin: 4px 0 0; font-size: 8px; line-height: 1.45; }
+.assessment span { color: #aebbd0; font-size: 9px; text-transform: uppercase; }
+.assessment p { margin: 4px 0 0; font-size: 10px; line-height: 1.5; }
+.latest-materials { margin-top: 14px; padding: 10px; border: 1px solid #344055; border-radius: 8px; }
+.latest-materials span, .latest-materials b { display: block; font-size: 9px; }
+.latest-materials span { color: #aebbd0; text-transform: uppercase; letter-spacing: .06em; }
+.latest-materials b { margin-top: 4px; color: var(--on-dark); font-size: 10px; }
 .next-action { margin-top: 16px; padding: 11px; border-radius: 8px; background: var(--signal); color: white; }
-.next-action span, .next-action b { display: block; font-size: 7px; }
-.next-action b { margin-top: 4px; font-size: 9px; }
+.next-action span, .next-action b { display: block; font-size: 9px; }
+.next-action b { margin-top: 4px; font-size: 11px; }
 .empty-state { padding: 30px; color: var(--muted); font-size: 10px; }
 
 .privacy-section { background: var(--nav); color: var(--on-dark); }

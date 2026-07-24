@@ -1,6 +1,13 @@
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import type { Application, DashboardData, Fit } from "./types";
+import { isAbsolute, relative, resolve } from "node:path";
+import type {
+  Application,
+  DashboardData,
+  Fit,
+  ImportantAnswer,
+  MaterialVersion,
+  PostingSnapshot,
+} from "./types";
 
 type JsonObject = Record<string, unknown>;
 
@@ -21,6 +28,33 @@ function text(value: unknown, fallback = "Not recorded"): string {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
+function displayText(value: unknown, fallback = "Not recorded"): string {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => displayText(item, ""))
+      .filter(Boolean);
+    return items.length ? items.join(", ") : fallback;
+  }
+  return fallback;
+}
+
+function webUrl(value: unknown): string {
+  const candidate = text(value, "");
+  if (!candidate) return "";
+  try {
+    const parsed = new URL(candidate);
+    return ["http:", "https:"].includes(parsed.protocol) ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function objects(value: unknown): JsonObject[] {
+  return Array.isArray(value) ? value.map(object) : [];
+}
+
 function evidenceValue(value: unknown): unknown {
   const item = object(value);
   return item.verified === true ? item.value : undefined;
@@ -35,11 +69,71 @@ async function readJson(path: string): Promise<unknown | null> {
   }
 }
 
-function normalizeApplication(value: unknown, index: number): Application {
+function privateFilePath(privateRoot: string, value: unknown): string | null {
+  const candidate = text(value, "")
+    .replace(/^\.job-search[\\/]/i, "")
+    .replace(/[\\/]+/g, "\\");
+  if (!candidate) return null;
+  const resolved = resolve(privateRoot, candidate);
+  const withinRoot = relative(privateRoot, resolved);
+  if (!withinRoot || withinRoot.startsWith("..") || isAbsolute(withinRoot)) return null;
+  return resolved;
+}
+
+async function postingSnapshot(value: unknown, privateRoot: string): Promise<PostingSnapshot> {
+  const item = object(value);
+  const savedPath = text(item.path, "");
+  const resolvedPath = privateFilePath(privateRoot, savedPath);
+  let content = "";
+  if (resolvedPath) {
+    try {
+      content = await readFile(resolvedPath, "utf8");
+    } catch {
+      content = "";
+    }
+  }
+  return {
+    sourceUrl: webUrl(item.sourceUrl),
+    capturedAt: text(item.capturedAt, ""),
+    currentConfirmedAt: text(item.currentConfirmedAt, ""),
+    credibleSourceConfirmed: item.credibleSourceConfirmed === true,
+    content,
+  };
+}
+
+function importantAnswer(value: unknown): ImportantAnswer {
+  const item = object(value);
+  return {
+    question: displayText(item.question, "Recorded application answer"),
+    answer: displayText(item.answer),
+    source: text(item.source, ""),
+    sensitive: item.sensitive === true,
+    approvalState: text(item.approval_state, ""),
+  };
+}
+
+function materialVersion(value: unknown): MaterialVersion {
+  const item = object(value);
+  return {
+    version: displayText(item.version, "Recorded version"),
+    generatedAt: text(item.generatedAt, ""),
+    files: objects(item.files).map((file) => ({
+      kind: text(file.kind, "document"),
+    })),
+  };
+}
+
+async function normalizeApplication(value: unknown, index: number, privateRoot: string): Promise<Application> {
   const item = object(value);
   const fit = FITS.has(item.fit as Fit)
     ? (item.fit as Fit)
     : "reasonable-stretch";
+  const postingSnapshots = await Promise.all(
+    objects(item.postingSnapshots).map((snapshot) => postingSnapshot(snapshot, privateRoot)),
+  );
+  const latestSnapshot = postingSnapshots[postingSnapshots.length - 1];
+  const approvalValue = object(item.approval);
+  const evidence = object(item.submissionEvidence);
 
   return {
     id: text(item.id, `local-${index + 1}`),
@@ -47,6 +141,7 @@ function normalizeApplication(value: unknown, index: number): Application {
     role: text(item.role),
     location: text(item.location),
     arrangement: text(item.arrangement),
+    employmentType: text(item.employmentType),
     status: text(item.status, "research"),
     fit,
     compensation: text(item.compensation),
@@ -55,6 +150,29 @@ function normalizeApplication(value: unknown, index: number): Application {
     strongestMatch: text(item.strongestMatch),
     largestGap: text(item.largestGap),
     risk: text(item.risk),
+    sourceUrl: webUrl(item.url) || latestSnapshot?.sourceUrl || "",
+    postingSnapshots,
+    importantAnswers: objects(item.importantAnswers).map(importantAnswer),
+    unresolvedQuestions: Array.isArray(item.unresolvedQuestions)
+      ? item.unresolvedQuestions
+          .map((question) => displayText(question, ""))
+          .filter(Boolean)
+      : [],
+    materials: objects(item.materials).map(materialVersion),
+    approval: Object.keys(approvalValue).length
+      ? {
+          authorizedAt: text(approvalValue.authorizedAt, ""),
+          confirmation: displayText(approvalValue.confirmation),
+        }
+      : null,
+    submissionEvidence: Object.keys(evidence).length
+      ? {
+          kind: text(evidence.kind, "Verified confirmation"),
+          description: displayText(evidence.description, "Confirmation evidence saved privately"),
+          recordedAt: text(evidence.recordedAt, ""),
+        }
+      : null,
+    createdAt: text(item.createdAt, ""),
     updatedAt: text(item.updatedAt, ""),
   };
 }
@@ -97,7 +215,11 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
 
     const ledger = object(ledgerValue);
     const applications = Array.isArray(ledger.applications)
-      ? ledger.applications.map(normalizeApplication)
+      ? await Promise.all(
+          ledger.applications.map((application, index) =>
+            normalizeApplication(application, index, privateRoot),
+          ),
+        )
       : [];
 
     return {

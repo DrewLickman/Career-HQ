@@ -6,11 +6,21 @@ Career HQ turns a cloned GitHub repository into a private, local job-search oper
 
 The public website contains instructions and a fictional product preview only. Each user's real workflow runs in an independent local project and writes only to its ignored `.job-search/` workspace.
 
+## Two Career HQ websites
+
+| Website | Purpose | Access |
+| --- | --- | --- |
+| [Public setup guide](https://career-hq-guide.magicalmongoose.chatgpt.site/) | Explains Career HQ, provides Codex setup instructions, and shows fictional preview data. | Publicly accessible; never receives applicant data. |
+| [Private local dashboard](http://127.0.0.1:3000) | Displays the user's real applications, resumes, follow-ups, and private job-search records. | Works only on the user's computer while Career HQ is running. |
+
+The public guide helps a new user install Career HQ. It is not the working dashboard. The local dashboard is the private application and opens only after the local Career HQ server starts.
+
 ## Start here
 
-1. Open [the public setup website](https://career-hq-guide.magicalmongoose.chatgpt.site).
+1. Open the public [Career HQ setup guide](https://career-hq-guide.magicalmongoose.chatgpt.site/). Do not expect to see your applications there.
 2. Copy the website link and paste it into a new Codex conversation.
 3. Confirm where Codex should create the local project.
+4. After setup, use the private [local dashboard](http://127.0.0.1:3000) for your real job search.
 
 For a manual installation, clone or download this repository, open the folder in Codex, and enter:
 
@@ -48,7 +58,7 @@ python -m pip install -r requirements.txt
 npm run dev
 ```
 
-Open `http://127.0.0.1:3000`. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Run `npm run dev:check` for a finite startup check.
+Open the private local dashboard at [http://127.0.0.1:3000](http://127.0.0.1:3000). This address is separate from the public setup guide and works only on the computer running Career HQ. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Run `npm run dev:check` for a finite startup check.
 
 The dashboard shows a setup instruction until Codex initializes `.job-search/`. After that, refresh the page whenever Codex updates the local ledger; no export or sync command is required.
 

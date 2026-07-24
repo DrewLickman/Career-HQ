@@ -16,6 +16,12 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
   const port = 31_000 + (process.pid % 1_000);
   const url = `http://127.0.0.1:${port}/`;
   mkdirSync(privateRoot);
+  mkdirSync(join(privateRoot, "postings"));
+  mkdirSync(join(privateRoot, "materials", "local-test"), { recursive: true });
+  writeFileSync(join(privateRoot, "postings", "local-test-posting.txt"), "Full saved posting for the fictional Local Test Systems role.");
+  writeFileSync(join(privateRoot, "materials", "local-test", "local-test-001-resume-v001.pdf"), "older fictional resume bytes");
+  writeFileSync(join(privateRoot, "materials", "local-test", "local-test-001-resume-v002.pdf"), "current fictional PDF bytes");
+  writeFileSync(join(privateRoot, "materials", "local-test", "local-test-001-resume-v002.docx"), "current fictional Word bytes");
   writeFileSync(join(privateRoot, "applicant-profile.json"), JSON.stringify({
     identity: { displayName: { value: "Local Test Candidate", source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
     searchDirection: { targetRoles: { value: ["Local Systems Specialist"], source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
@@ -24,9 +30,58 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
     updatedAt: "2026-07-22T12:00:00Z",
     applications: [{
       id: "local-test-001", employer: "Local Test Systems", role: "Automation Specialist",
-      location: "Remote", arrangement: "Remote", status: "research", fit: "strong-match",
+      location: "Remote", arrangement: "Remote", employmentType: "Full-time",
+      status: "research", fit: "strong-match", url: "https://jobs.example.test/local-test",
       compensation: "Test range", nextAction: "Review local test posting", nextActionDate: "2026-07-23",
       strongestMatch: "Verified test evidence", largestGap: "Test gap", risk: "Test risk", updatedAt: "2026-07-22",
+      postingSnapshots: [{
+        path: "postings/local-test-posting.txt",
+        sourceUrl: "https://jobs.example.test/local-test",
+        capturedAt: "2026-07-22T12:00:00Z",
+        credibleSourceConfirmed: true,
+      }],
+      importantAnswers: [{
+        question: "Can the fictional candidate work remotely?",
+        answer: "Yes",
+        source: "test-fixture",
+        sensitive: false,
+      }],
+      materials: [
+        {
+          version: 1,
+          generatedAt: "2026-07-21T12:00:00Z",
+          files: [{
+            kind: "pdf",
+            filename: "local-test-001-resume-v001.pdf",
+            path: "materials/local-test/local-test-001-resume-v001.pdf",
+          }],
+        },
+        {
+          version: 2,
+          generatedAt: "2026-07-22T12:00:00Z",
+          files: [
+            {
+              kind: "pdf",
+              filename: "local-test-001-resume-v002.pdf",
+              path: "materials/local-test/local-test-001-resume-v002.pdf",
+            },
+            {
+              kind: "docx",
+              filename: "local-test-001-resume-v002.docx",
+              path: "materials/local-test/local-test-001-resume-v002.docx",
+            },
+          ],
+        },
+      ],
+    }, {
+      id: "local-test-closed", employer: "Closed Test Works", role: "Archived Specialist",
+      location: "Remote", arrangement: "Remote", employmentType: "Full-time",
+      status: "closed", fit: "reasonable-stretch", url: "https://jobs.example.test/closed-test",
+      compensation: "Test range", nextAction: "No active action - terminal status.", nextActionDate: null,
+      strongestMatch: "Historical test evidence", largestGap: "Historical test gap", risk: "Closed role", updatedAt: "2026-07-20",
+      postingSnapshots: [],
+      importantAnswers: [],
+      materials: [],
     }],
   }));
 
@@ -67,14 +122,34 @@ test("dashboard source uses private local JSON instead of sample data", () => {
   assert.match(gitignore, /^\/\.job-search\/$/m);
 });
 
+test("README clearly separates the public guide from the private local dashboard", () => {
+  const readme = readFileSync(join(REPO, "README.md"), "utf8");
+  assert.match(readme, /## Two Career HQ websites/);
+  assert.match(readme, /\[Public setup guide\]\(https:\/\/career-hq-guide\.magicalmongoose\.chatgpt\.site\/\)/);
+  assert.match(readme, /\[Private local dashboard\]\(http:\/\/127\.0\.0\.1:3000\)/);
+  assert.match(readme, /never receives applicant data/i);
+  assert.match(readme, /works only on the user's computer/i);
+});
+
 test("dashboard source includes accessible interaction and responsive cards", () => {
+  const layout = readFileSync(join(REPO, "app", "layout.tsx"), "utf8");
   const component = readFileSync(join(REPO, "dashboard", "CareerDashboard.tsx"), "utf8");
   const css = readFileSync(join(REPO, "dashboard", "dashboard.module.css"), "utf8");
   const globals = readFileSync(join(REPO, "app", "globals.css"), "utf8");
+  assert.match(layout, /<html[^>]+suppressHydrationWarning/);
   assert.match(component, /aria-pressed/);
   assert.match(component, /aria-live="polite"/);
+  assert.match(component, /aria-current/);
+  assert.match(component, /getBoundingClientRect/);
+  assert.match(component, /Original source/);
+  assert.match(component, /Full saved posting/);
   assert.match(component, /Search applications/);
   assert.match(component, /Filter by pipeline status/);
+  assert.match(component, /Active applications/);
+  assert.match(component, /closed hidden/);
+  assert.match(component, />CHQ</);
+  assert.match(component, /Latest resume/);
+  assert.doesNotMatch(component, /Local by design|Local files only|Private local workspace|reads private local files/);
   assert.match(css, /@media \(max-width: 720px\)/);
   assert.match(globals, /:focus-visible/);
 });

@@ -17,6 +17,7 @@ const applications = [
     date: "Today",
     match: "Workflow automation and client support evidence",
     gap: "Limited enterprise-scale ownership",
+    materials: "Resume PDF · Resume Word",
   },
   {
     id: "pine",
@@ -30,6 +31,7 @@ const applications = [
     date: "Tomorrow",
     match: "Project coordination and technical communication",
     gap: "Preferred SaaS implementation tenure",
+    materials: "No materials prepared yet",
   },
   {
     id: "brightline",
@@ -43,12 +45,13 @@ const applications = [
     date: "Friday",
     match: "AI tooling, evaluation, and process documentation",
     gap: "No gap requiring a claim change",
+    materials: "Resume PDF · Resume Word",
   },
   {
     id: "cedar",
     company: "Cedar Works",
     role: "Technical Support Analyst",
-    location: "Murfreesboro, TN",
+    location: "Madison, WI",
     status: "Interview",
     fit: "Reasonable stretch",
     fitClass: "stretch",
@@ -56,10 +59,25 @@ const applications = [
     date: "Jul 29",
     match: "Troubleshooting and user-facing support",
     gap: "Role includes occasional hardware handling",
+    materials: "Resume PDF · Resume Word",
+  },
+  {
+    id: "harbor",
+    company: "Harbor Ridge",
+    role: "Support Operations Coordinator",
+    location: "Remote",
+    status: "Closed",
+    fit: "Reasonable stretch",
+    fitClass: "stretch",
+    action: "No active action",
+    date: "Closed",
+    match: "Support process documentation and customer communication",
+    gap: "Preferred enterprise ticketing experience",
+    materials: "Resume PDF · Resume Word",
   },
 ] as const;
 
-const filters = ["All", "Research", "Ready", "Applied", "Interview"] as const;
+const filters = ["Active", "Research", "Ready", "Applied", "Interview", "Closed"] as const;
 
 const setupSteps = [
   {
@@ -105,11 +123,11 @@ const systemCapabilities = [
 
 export default function Home() {
   const [copied, setCopied] = useState(false);
-  const [filter, setFilter] = useState<(typeof filters)[number]>("All");
+  const [filter, setFilter] = useState<(typeof filters)[number]>("Active");
   const [selectedId, setSelectedId] = useState<string>(applications[0].id);
 
   const visibleApplications = useMemo(
-    () => applications.filter((application) => filter === "All" || application.status === filter),
+    () => applications.filter((application) => filter === "Active" ? application.status !== "Closed" : application.status === filter),
     [filter],
   );
   const selected =
@@ -154,9 +172,8 @@ export default function Home() {
           <p className="eyebrow"><span className="status-dot" /> Public setup guide · Windows release</p>
           <h1>Set up a private job-search system on your Windows PC.</h1>
           <p className="hero-lede">
-            This website gives Codex the installation instructions for Career HQ. Career HQ then runs locally on
-            your computer to build a sourced applicant profile, evaluate jobs, create truthful application
-            materials, and track every follow-up.
+            Give this page to Codex. It installs Career HQ locally, builds a sourced applicant profile, evaluates
+            jobs, prepares truthful resumes, and keeps applications and follow-ups organized.
           </p>
           <p className="hero-clarifier">
             This page is the setup handoff—not the job-search app. It never receives your resume or application data.
@@ -205,7 +222,7 @@ export default function Home() {
       <section className="section how-section" id="how-it-works">
         <div className="section-heading">
           <div><p className="eyebrow">How setup works</p><h2>Four steps from this page to your private dashboard.</h2></div>
-          <p>The website only tells Codex how to create and verify the system. Your working Career HQ stays on your computer.</p>
+          <p>Copy this page into Codex, approve the folder and prerequisites, answer the guided profile questions, then use your local dashboard.</p>
         </div>
         <ol className="steps-grid">
           {setupSteps.map((step, index) => (
@@ -223,8 +240,8 @@ export default function Home() {
           <p className="eyebrow">What the installed system does</p>
           <h2>One local workspace for the full application process.</h2>
           <p>
-            Career HQ is not a job board and it is not an auto-apply bot. It gives Codex a defined workflow,
-            private files, validation scripts, document templates, and a local dashboard for your job search.
+            Career HQ is not a job board or an auto-apply bot. It is a guided system that helps Codex use verified
+            facts, prepare job-specific materials, request approval, and track what happens next.
           </p>
         </div>
         <div className="capability-list">
@@ -237,40 +254,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section creates-section">
-        <div className="creates-copy">
-          <p className="eyebrow">Where your information lives</p>
-          <h2>Personal data stays inside a Git-ignored folder.</h2>
-          <p>
-            The public repository contains the reusable workflow and code. Your real profile, postings, generated
-            documents, and application ledger are created only inside <code>.job-search/</code> on your computer.
-          </p>
-          <ul className="check-list">
-            <li><span>✓</span> The dashboard listens only on your computer</li>
-            <li><span>✓</span> Public previews use fictional data</li>
-            <li><span>✓</span> Private files are excluded from Git and releases</li>
-            <li><span>✓</span> No accounts, analytics, uploads, or cloud database</li>
-          </ul>
-        </div>
-        <div className="file-tree" aria-label="Career HQ local folder structure">
-          <div className="tree-title"><span className="folder-icon">■</span><strong>Career-HQ</strong><small>YOUR COMPUTER</small></div>
-          <div className="tree-line"><span>├─</span><b>.agents/</b><em>Codex workflow</em></div>
-          <div className="tree-line"><span>├─</span><b>scripts/</b><em>Privacy & verification</em></div>
-          <div className="tree-line private-line"><span>├─</span><b>.job-search/</b><em>Private · Git ignored</em></div>
-          <div className="tree-line nested"><span>│&nbsp;&nbsp;├─</span><b>applicant-profile.json</b></div>
-          <div className="tree-line nested"><span>│&nbsp;&nbsp;├─</span><b>applications.json</b></div>
-          <div className="tree-line nested"><span>│&nbsp;&nbsp;└─</span><b>materials/</b></div>
-          <div className="tree-line"><span>└─</span><b>dashboard/</b><em>Loopback only</em></div>
-          <p className="tree-note"><span className="status-dot" /> The hosted website cannot access this folder.</p>
-        </div>
-      </section>
-
       <section className="preview-section" id="preview">
         <div className="preview-heading">
           <div>
             <p className="eyebrow">Interactive fictional example</p>
             <h2>Preview the local application dashboard.</h2>
-            <p>Filter the sample pipeline and select a role to see the fit evidence, gap, and next action Career HQ keeps together.</p>
+            <p>Active applications appear first. Open Closed when you need history, then select a role to see its evidence, latest materials, and next action.</p>
           </div>
           <span className="fiction-badge">Fictional data only</span>
         </div>
@@ -281,7 +270,7 @@ export default function Home() {
             <div className="local-card"><span className="status-dot" /><b>Local dashboard</b><p>The real dashboard reads your private files only when you open it on your PC.</p></div>
           </div>
           <div className="dashboard-main">
-            <div className="dashboard-title"><div><small>FICTIONAL WEEKLY BRIEFING</small><h3>Move the right opportunities forward.</h3></div><span>4 tracked</span></div>
+            <div className="dashboard-title"><div><small>FICTIONAL WEEKLY BRIEFING</small><h3>Move the right opportunities forward.</h3></div><span>4 active · 1 closed</span></div>
             <div className="metrics-row">
               <div><small>Ready to apply</small><strong>1</strong><span>Awaiting review</span></div>
               <div><small>Active pipeline</small><strong>3</strong><span>Moving opportunities</span></div>
@@ -318,6 +307,7 @@ export default function Home() {
                 <dl><div><dt>Status</dt><dd>{selected.status}</dd></div><div><dt>Fit</dt><dd>{selected.fit}</dd></div></dl>
                 <div className="assessment"><span>Strongest match</span><p>{selected.match}</p></div>
                 <div className="assessment"><span>Largest gap</span><p>{selected.gap}</p></div>
+                <div className="latest-materials"><span>Latest materials</span><b>{selected.materials}</b></div>
                 <div className="next-action"><span>Next action · {selected.date}</span><b>{selected.action}</b></div>
               </article>
             </div>
@@ -329,7 +319,7 @@ export default function Home() {
         <div className="privacy-intro">
           <p className="eyebrow">Exact safety boundaries</p>
           <h2>The public guide and private system stay separate.</h2>
-          <p>Career HQ enforces privacy, evidence, and approval with local files and deterministic checks—not a promise hidden in fine print.</p>
+          <p>The hosted guide explains setup. The working dashboard and all real applicant records remain on your computer.</p>
         </div>
         <div className="boundary-grid">
           <article><span>PUBLIC WEBSITE</span><h3>No resume upload or applicant account</h3><p>This site contains setup instructions and fictional preview data only. It has no forms, analytics, telemetry, or remote applicant storage.</p></article>
@@ -343,7 +333,6 @@ export default function Home() {
         <div className="faq-list">
           <details><summary>Is this website the Career HQ app?<span>+</span></summary><p>No. This is the public setup guide and fictional preview. The working system is installed into a private folder on your Windows PC.</p></details>
           <details><summary>What does Codex install?<span>+</span></summary><p>A local Career HQ project containing its workflow, safeguards, templates, tests, scripts, and loopback-only dashboard. Codex checks Git, Node.js 20.9 or newer, and Python 3.11 or newer first.</p></details>
-          <details><summary>Does this website receive my information?<span>+</span></summary><p>No. It has no account, form, upload, analytics, telemetry, or database. Your real applicant values belong only in the local Git-ignored <code>.job-search/</code> folder.</p></details>
           <details><summary>Will Career HQ apply to jobs without asking?<span>+</span></summary><p>No. Creating application materials never authorizes submission. Career HQ requires approval for one named application and records “submitted” only with confirmation evidence.</p></details>
           <details><summary>Does it work outside Windows?<span>+</span></summary><p>The first public release is Windows-only. The setup instructions stop rather than improvising an unsupported installation on another operating system.</p></details>
         </div>
