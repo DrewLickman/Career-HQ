@@ -13,6 +13,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
 
 
 FIT_LABELS = {
@@ -331,10 +332,25 @@ def collect_resume_evidence(profile: dict[str, Any], posting_text: str) -> dict[
     unresolved = [conflict for conflict in profile.get("conflicts", []) if conflict.get("status") == "unresolved"]
     if unresolved:
         raise SystemExit("Resolve profile conflicts before generating materials.")
-    name = verified_value(profile.get("identity", {}).get("displayName"), "identity.displayName")
-    email = verified_value(profile.get("identity", {}).get("email"), "identity.email", required=False)
-    location = verified_value(profile.get("identity", {}).get("location"), "identity.location", required=False)
+    identity = profile.get("identity", {})
+    name = (
+        verified_value(identity.get("legalName"), "identity.legalName", required=False)
+        or verified_value(identity.get("displayName"), "identity.displayName")
+    )
+    email = verified_value(identity.get("email"), "identity.email", required=False)
+    phone = verified_value(identity.get("phone"), "identity.phone", required=False)
+    location = verified_value(identity.get("location"), "identity.location", required=False)
     summary = verified_value(profile.get("summary"), "summary")
+    links = []
+    for index, link in enumerate(profile.get("links", [])):
+        if not link.get("verified") or not link.get("source") or not link.get("verifiedAt") or not link.get("url"):
+            raise SystemExit(f"Unverified or untraceable profile value: links[{index}]")
+        links.append({
+            "type": link.get("type", "Link"),
+            "url": link["url"],
+            "source": link["source"],
+            "verifiedAt": link["verifiedAt"],
+        })
     skills = []
     for index, skill in enumerate(profile.get("skills", [])):
         skills.append({
@@ -358,7 +374,62 @@ def collect_resume_evidence(profile: dict[str, Any], posting_text: str) -> dict[
     for experience in experiences:
         experience["relevance"] = sum(word in keywords for word in re.findall(r"[a-z]{4,}", " ".join(claim["text"] for claim in experience["claims"]).lower()))
     experiences.sort(key=lambda item: item["relevance"], reverse=True)
-    return {"name": name, "email": email, "location": location, "summary": summary, "skills": skills, "experience": experiences}
+
+    education = []
+    for index, item in enumerate(profile.get("education", [])):
+        if not item.get("verified") or not item.get("source") or not item.get("verifiedAt"):
+            raise SystemExit(f"Unverified or untraceable profile value: education[{index}]")
+        coursework = []
+        for course_index, course in enumerate(item.get("relevantCoursework", [])):
+            coursework.append({
+                "value": verified_value(course, f"education[{index}].relevantCoursework[{course_index}]"),
+                "source": course["source"],
+                "verifiedAt": course["verifiedAt"],
+            })
+        education.append({
+            **{key: item.get(key) for key in (
+                "degree", "field", "minor", "institution", "start_date",
+                "graduation_date", "gpa", "honors",
+            )},
+            "coursework": coursework,
+            "source": item["source"],
+            "verifiedAt": item["verifiedAt"],
+        })
+
+    exclusions = {
+        verified_value(item, f"resumePreferences.excludedProjects[{index}]")
+        for index, item in enumerate(profile.get("resumePreferences", {}).get("excludedProjects", []))
+    }
+    projects = []
+    for index, project in enumerate(profile.get("projects", [])):
+        if project.get("name") in exclusions:
+            continue
+        claims = []
+        for claim_index, claim in enumerate(project.get("claims", [])):
+            claims.append({
+                "text": verified_value(claim, f"projects[{index}].claims[{claim_index}]"),
+                "source": claim["source"],
+                "verifiedAt": claim["verifiedAt"],
+            })
+        if not claims:
+            continue
+        projects.append({
+            **{key: project.get(key) for key in ("name", "date", "context", "url", "technologies")},
+            "claims": claims,
+        })
+
+    return {
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "location": location,
+        "links": links,
+        "summary": summary,
+        "skills": skills,
+        "experience": experiences,
+        "education": education,
+        "projects": projects,
+    }
 
 
 def apply_tailoring(evidence: dict[str, Any], tailoring_path: Path | None) -> dict[str, Any]:
@@ -393,8 +464,45 @@ def apply_tailoring(evidence: dict[str, Any], tailoring_path: Path | None) -> di
         ordered = [skills_by_name[name] for name in requested_skill_order]
         ordered.extend(skill for skill in evidence["skills"] if skill["value"] not in requested_skill_order)
         evidence["skills"] = ordered
+    requested_skill_selection = tailoring.get("skillSelection", [])
+    if requested_skill_selection:
+        skills_by_name = {str(skill["value"]): skill for skill in evidence["skills"]}
+        if any(name not in skills_by_name for name in requested_skill_selection):
+            raise SystemExit("Tailoring selects a skill that is not verified in the profile.")
+        evidence["skills"] = [skills_by_name[name] for name in requested_skill_selection]
+    requested_experience_selection = tailoring.get("experienceSelection", [])
+    if requested_experience_selection:
+        experience_by_id = {str(item.get("id")): item for item in evidence["experience"]}
+        if any(item_id not in experience_by_id for item_id in requested_experience_selection):
+            raise SystemExit("Tailoring selects experience that is not verified in the profile.")
+        evidence["experience"] = [experience_by_id[item_id] for item_id in requested_experience_selection]
     evidence["tailoring"] = {"path": str(tailoring_path), "reviewedAt": tailoring["reviewedAt"], "truthReviewed": True}
     return evidence
+
+
+def format_resume_date(value: Any) -> str | None:
+    if not value:
+        return None
+    text = str(value)
+    if match := re.fullmatch(r"(\d{4})-(spring|summer|fall|winter)", text, flags=re.IGNORECASE):
+        return f"{match.group(2).title()} {match.group(1)}"
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        return datetime.strptime(text, "%Y-%m-%d").strftime("%B %Y")
+    if re.fullmatch(r"\d{4}-\d{2}", text):
+        return datetime.strptime(text, "%Y-%m").strftime("%B %Y")
+    return text
+
+
+def experience_heading(experience: dict[str, Any]) -> str:
+    return " | ".join(
+        str(value) for value in (experience.get("title"), experience.get("employer")) if value
+    )
+
+
+def experience_dates(experience: dict[str, Any]) -> str | None:
+    start = format_resume_date(experience.get("startDate"))
+    end = format_resume_date(experience.get("endDate")) if experience.get("endDate") else ("Present" if start else None)
+    return " - ".join(value for value in (start, end) if value) or None
 
 
 def next_version(directory: Path, application_id: str) -> int:
@@ -406,7 +514,6 @@ def next_version(directory: Path, application_id: str) -> int:
 def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, Any]) -> None:
     try:
         from docx import Document
-        from docx.enum.section import WD_SECTION
         from docx.enum.text import WD_ALIGN_PARAGRAPH
         from docx.oxml.ns import qn
         from docx.shared import Inches, Pt, RGBColor
@@ -415,46 +522,108 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
 
     document = Document()
     section = document.sections[0]
-    section.top_margin = section.bottom_margin = Inches(1)
-    section.left_margin = section.right_margin = Inches(1)
-    section.header_distance = section.footer_distance = Inches(0.492)
+    section.top_margin = section.bottom_margin = Inches(0.62)
+    section.left_margin = section.right_margin = Inches(0.7)
+    section.header_distance = section.footer_distance = Inches(0.3)
     styles = document.styles
     normal = styles["Normal"]
-    normal.font.name = "Arial"; normal._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); normal._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); normal.font.size = Pt(10.5)
-    normal.paragraph_format.space_after = Pt(4); normal.paragraph_format.line_spacing = 1.1
-    for style_name, size in (("Heading 1", 13), ("Heading 2", 11)):
+    normal.font.name = "Arial"; normal._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); normal._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); normal.font.size = Pt(9.4)
+    normal.paragraph_format.space_after = Pt(2); normal.paragraph_format.line_spacing = 1.02
+    for style_name, size in (("Heading 1", 11.5), ("Heading 2", 10)):
         style = styles[style_name]
         style.font.name = "Arial"; style._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); style._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); style.font.size = Pt(size); style.font.bold = True; style.font.color.rgb = RGBColor(23, 32, 27)
-        style.paragraph_format.space_before = Pt(10); style.paragraph_format.space_after = Pt(4)
+        style.paragraph_format.space_before = Pt(7); style.paragraph_format.space_after = Pt(2)
+        style.paragraph_format.keep_with_next = True
 
     title = document.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title.paragraph_format.space_after = Pt(2)
-    run = title.add_run(str(evidence["name"])); run.font.name = "Arial"; run._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); run.font.size = Pt(22); run.bold = True; run.font.color.rgb = RGBColor(23, 32, 27)
+    title.paragraph_format.space_after = Pt(1)
+    run = title.add_run(str(evidence["name"])); run.font.name = "Arial"; run._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); run.font.size = Pt(20); run.bold = True; run.font.color.rgb = RGBColor(23, 32, 27)
     contact = document.add_paragraph()
-    contact.alignment = WD_ALIGN_PARAGRAPH.CENTER; contact.paragraph_format.space_after = Pt(10)
-    contact.add_run(" | ".join(value for value in (evidence.get("email"), evidence.get("location")) if value))
+    contact.alignment = WD_ALIGN_PARAGRAPH.CENTER; contact.paragraph_format.space_after = Pt(1)
+    contact.add_run(" | ".join(value for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email")) if value))
+    if evidence.get("links"):
+        links = document.add_paragraph()
+        links.alignment = WD_ALIGN_PARAGRAPH.CENTER; links.paragraph_format.space_after = Pt(6)
+        links_run = links.add_run(" | ".join(str(link["url"]).removeprefix("https://").rstrip("/") for link in evidence["links"]))
+        links_run.font.size = Pt(8.6)
 
-    document.add_heading("Professional summary", level=1)
+    document.add_heading("PROFESSIONAL SUMMARY", level=1)
     document.add_paragraph(str(evidence["summary"]))
     if evidence["skills"]:
-        document.add_heading("Relevant skills", level=1)
+        document.add_heading("TECHNICAL SKILLS", level=1)
         skills = document.add_paragraph()
         skills.add_run(" | ".join(str(skill["value"]) for skill in evidence["skills"]))
-    document.add_heading("Experience", level=1)
-    for experience in evidence["experience"]:
+    professional_experience = [item for item in evidence["experience"] if item.get("employer")]
+    additional_experience = [item for item in evidence["experience"] if not item.get("employer")]
+    document.add_heading("PROFESSIONAL EXPERIENCE", level=1)
+    for experience in professional_experience:
         heading = document.add_paragraph()
-        heading.paragraph_format.space_before = Pt(8); heading.paragraph_format.space_after = Pt(1)
-        left = heading.add_run(f"{experience.get('title', '')} | {experience.get('employer', '')}"); left.bold = True
-        dates = document.add_paragraph(f"{experience.get('startDate', '')} - {experience.get('endDate', 'Present')} | {experience.get('experienceType', 'professional')}")
-        dates.paragraph_format.space_after = Pt(2)
+        heading.paragraph_format.space_before = Pt(5); heading.paragraph_format.space_after = Pt(0); heading.paragraph_format.keep_with_next = True
+        left = heading.add_run(experience_heading(experience)); left.bold = True
+        if date_text := experience_dates(experience):
+            dates = document.add_paragraph(date_text)
+            dates.paragraph_format.space_after = Pt(1); dates.paragraph_format.keep_with_next = True
         for claim in experience["claims"]:
             bullet = document.add_paragraph(style="List Bullet")
-            bullet.paragraph_format.left_indent = Inches(0.5); bullet.paragraph_format.first_line_indent = Inches(-0.25); bullet.paragraph_format.space_after = Pt(3); bullet.paragraph_format.line_spacing = 1.1
+            bullet.paragraph_format.left_indent = Inches(0.35); bullet.paragraph_format.first_line_indent = Inches(-0.2); bullet.paragraph_format.space_after = Pt(1); bullet.paragraph_format.line_spacing = 1.0
             bullet.add_run(claim["text"])
-    footer = section.footer.paragraphs[0]
-    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    footer.add_run(f"Tailored for {application['employer']} - {application['role']} | Generated {today_iso()}")
+
+    if additional_experience:
+        document.add_heading("ADDITIONAL EXPERIENCE", level=1)
+        for experience in additional_experience:
+            heading = document.add_paragraph()
+            heading.paragraph_format.space_before = Pt(4); heading.paragraph_format.space_after = Pt(1); heading.paragraph_format.keep_with_next = True
+            heading.add_run(experience_heading(experience)).bold = True
+            for claim in experience["claims"]:
+                bullet = document.add_paragraph(style="List Bullet")
+                bullet.paragraph_format.left_indent = Inches(0.35); bullet.paragraph_format.first_line_indent = Inches(-0.2); bullet.paragraph_format.space_after = Pt(1)
+                bullet.add_run(claim["text"])
+
+    if evidence.get("projects"):
+        document.add_heading("SELECTED PROJECTS", level=1)
+        for project in evidence["projects"]:
+            project_heading = document.add_paragraph()
+            project_heading.paragraph_format.space_before = Pt(4); project_heading.paragraph_format.space_after = Pt(1); project_heading.paragraph_format.keep_with_next = True
+            label = " | ".join(str(value) for value in (project.get("name"), project.get("context")) if value)
+            project_heading.add_run(label).bold = True
+            if project.get("url"):
+                project_url = document.add_paragraph(str(project["url"]))
+                project_url.paragraph_format.space_after = Pt(1)
+            for claim in project["claims"]:
+                bullet = document.add_paragraph(style="List Bullet")
+                bullet.paragraph_format.left_indent = Inches(0.35); bullet.paragraph_format.first_line_indent = Inches(-0.2); bullet.paragraph_format.space_after = Pt(1)
+                bullet.add_run(claim["text"])
+
+    if evidence.get("education"):
+        document.add_heading("EDUCATION", level=1)
+        for item in evidence["education"]:
+            degree = " in ".join(value for value in (item.get("degree"), item.get("field")) if value)
+            if item.get("minor"):
+                degree = f"{degree}, Minor in {item['minor']}"
+            school = document.add_paragraph()
+            school.paragraph_format.space_after = Pt(0); school.paragraph_format.keep_with_next = True
+            school.add_run(f"{degree} | {item.get('institution', '')}").bold = True
+            dates = " - ".join(
+                value for value in (
+                    format_resume_date(item.get("start_date")),
+                    format_resume_date(item.get("graduation_date")),
+                ) if value
+            )
+            honors = ", ".join(str(value) for value in item.get("honors") or [])
+            details = " | ".join(
+                value for value in (
+                    dates,
+                    f"GPA: {item['gpa']}" if item.get("gpa") is not None else None,
+                    honors or None,
+                ) if value
+            )
+            if details:
+                document.add_paragraph(details)
+            if item.get("coursework"):
+                courses = document.add_paragraph()
+                courses.add_run("Relevant coursework: ").bold = True
+                courses.add_run("; ".join(str(course["value"]) for course in item["coursework"]))
     document.save(output)
 
 
@@ -465,30 +634,82 @@ def build_pdf(output: Path, evidence: dict[str, Any], application: dict[str, Any
         from reportlab.lib.pagesizes import LETTER
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer
+        from reportlab.platypus import Paragraph, SimpleDocTemplate
     except ImportError as exc:
         raise SystemExit("Install requirements.txt before generating resumes.") from exc
 
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("ResumeBody", parent=styles["BodyText"], fontName="Helvetica", fontSize=10.5, leading=13, spaceAfter=4, textColor=HexColor("#17201B"))
-    title = ParagraphStyle("ResumeTitle", parent=body, fontName="Helvetica-Bold", fontSize=22, leading=24, alignment=TA_CENTER, spaceAfter=3)
-    contact = ParagraphStyle("ResumeContact", parent=body, fontSize=9.5, alignment=TA_CENTER, spaceAfter=10)
-    heading = ParagraphStyle("ResumeHeading", parent=body, fontName="Helvetica-Bold", fontSize=13, leading=15, spaceBefore=9, spaceAfter=4)
-    role = ParagraphStyle("ResumeRole", parent=body, fontName="Helvetica-Bold", spaceBefore=6, spaceAfter=1)
-    bullet = ParagraphStyle("ResumeBullet", parent=body, leftIndent=18, firstLineIndent=-9, bulletIndent=5, spaceAfter=3)
-    story = [Paragraph(str(evidence["name"]), title)]
-    story.append(Paragraph(" | ".join(value for value in (evidence.get("email"), evidence.get("location")) if value), contact))
-    story.extend([Paragraph("Professional summary", heading), Paragraph(str(evidence["summary"]), body)])
+    body = ParagraphStyle("ResumeBody", parent=styles["BodyText"], fontName="Helvetica", fontSize=8.9, leading=9.7, spaceAfter=1, textColor=HexColor("#17201B"))
+    title = ParagraphStyle("ResumeTitle", parent=body, fontName="Helvetica-Bold", fontSize=19, leading=20, alignment=TA_CENTER, spaceAfter=0.5)
+    contact = ParagraphStyle("ResumeContact", parent=body, fontSize=8.4, leading=9.2, alignment=TA_CENTER, spaceAfter=0.5)
+    heading = ParagraphStyle("ResumeHeading", parent=body, fontName="Helvetica-Bold", fontSize=10.8, leading=11.8, spaceBefore=4.5, spaceAfter=1.5, keepWithNext=True)
+    role = ParagraphStyle("ResumeRole", parent=body, fontName="Helvetica-Bold", spaceBefore=2.5, spaceAfter=0, keepWithNext=True)
+    bullet = ParagraphStyle("ResumeBullet", parent=body, leftIndent=15, firstLineIndent=-7.5, bulletIndent=4, spaceAfter=0)
+    story = [Paragraph(escape(str(evidence["name"])), title)]
+    story.append(Paragraph(escape(" | ".join(value for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email")) if value)), contact))
+    if evidence.get("links"):
+        story.append(Paragraph(
+            escape(" | ".join(str(link["url"]).removeprefix("https://").rstrip("/") for link in evidence["links"])),
+            contact,
+        ))
+    story.extend([Paragraph("PROFESSIONAL SUMMARY", heading), Paragraph(escape(str(evidence["summary"])), body)])
     if evidence["skills"]:
-        story.extend([Paragraph("Relevant skills", heading), Paragraph(" | ".join(str(skill["value"]) for skill in evidence["skills"]), body)])
-    story.append(Paragraph("Experience", heading))
-    for experience in evidence["experience"]:
-        story.append(Paragraph(f"{experience.get('title', '')} | {experience.get('employer', '')}", role))
-        story.append(Paragraph(f"{experience.get('startDate', '')} - {experience.get('endDate', 'Present')} | {experience.get('experienceType', 'professional')}", body))
+        story.extend([Paragraph("TECHNICAL SKILLS", heading), Paragraph(escape(" | ".join(str(skill["value"]) for skill in evidence["skills"])), body)])
+    professional_experience = [item for item in evidence["experience"] if item.get("employer")]
+    additional_experience = [item for item in evidence["experience"] if not item.get("employer")]
+    story.append(Paragraph("PROFESSIONAL EXPERIENCE", heading))
+    for experience in professional_experience:
+        story.append(Paragraph(escape(experience_heading(experience)), role))
+        if date_text := experience_dates(experience):
+            story.append(Paragraph(escape(date_text), body))
         for claim in experience["claims"]:
-            story.append(Paragraph(claim["text"], bullet, bulletText="-"))
+            story.append(Paragraph(escape(claim["text"]), bullet, bulletText="-"))
 
-    document = SimpleDocTemplate(str(output), pagesize=LETTER, rightMargin=inch, leftMargin=inch, topMargin=inch, bottomMargin=inch, title=f"{evidence['name']} - {application['role']}", author="Career HQ")
+    if additional_experience:
+        story.append(Paragraph("ADDITIONAL EXPERIENCE", heading))
+        for experience in additional_experience:
+            story.append(Paragraph(escape(experience_heading(experience)), role))
+            for claim in experience["claims"]:
+                story.append(Paragraph(escape(claim["text"]), bullet, bulletText="-"))
+
+    if evidence.get("projects"):
+        story.append(Paragraph("SELECTED PROJECTS", heading))
+        for project in evidence["projects"]:
+            label = " | ".join(str(value) for value in (project.get("name"), project.get("context")) if value)
+            story.append(Paragraph(escape(label), role))
+            if project.get("url"):
+                story.append(Paragraph(escape(str(project["url"])), body))
+            for claim in project["claims"]:
+                story.append(Paragraph(escape(claim["text"]), bullet, bulletText="-"))
+
+    if evidence.get("education"):
+        story.append(Paragraph("EDUCATION", heading))
+        for item in evidence["education"]:
+            degree = " in ".join(value for value in (item.get("degree"), item.get("field")) if value)
+            if item.get("minor"):
+                degree = f"{degree}, Minor in {item['minor']}"
+            story.append(Paragraph(escape(f"{degree} | {item.get('institution', '')}"), role))
+            dates = " - ".join(
+                value for value in (
+                    format_resume_date(item.get("start_date")),
+                    format_resume_date(item.get("graduation_date")),
+                ) if value
+            )
+            honors = ", ".join(str(value) for value in item.get("honors") or [])
+            details = " | ".join(
+                value for value in (
+                    dates,
+                    f"GPA: {item['gpa']}" if item.get("gpa") is not None else None,
+                    honors or None,
+                ) if value
+            )
+            if details:
+                story.append(Paragraph(escape(details), body))
+            if item.get("coursework"):
+                courses = "; ".join(str(course["value"]) for course in item["coursework"])
+                story.append(Paragraph(f"<b>Relevant coursework:</b> {escape(courses)}", body))
+
+    document = SimpleDocTemplate(str(output), pagesize=LETTER, rightMargin=0.7 * inch, leftMargin=0.7 * inch, topMargin=0.55 * inch, bottomMargin=0.55 * inch, title=f"{evidence['name']} - {application['role']}", author="Career HQ")
     document.build(story)
 
 

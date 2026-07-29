@@ -125,15 +125,22 @@ test("dashboard source uses private local JSON instead of sample data", () => {
 test("README clearly separates the public guide from the private local dashboard", () => {
   const readme = readFileSync(join(REPO, "README.md"), "utf8");
   const launcher = readFileSync(join(REPO, "START CAREER HQ.bat"), "utf8");
+  const stopLauncher = readFileSync(join(REPO, "STOP CAREER HQ.bat"), "utf8");
+  const stopScript = readFileSync(join(REPO, "scripts", "stop-career-hq-server.ps1"), "utf8");
   assert.match(readme, /## Two Career HQ websites/);
   assert.match(readme, /\[Public setup guide\]\(https:\/\/career-hq-guide\.magicalmongoose\.chatgpt\.site\/\)/);
   assert.match(readme, /\[Private local dashboard\]\(http:\/\/127\.0\.0\.1:3000\)/);
   assert.match(readme, /never receives applicant data/i);
   assert.match(readme, /works only on the user's computer/i);
   assert.match(readme, /START CAREER HQ\.bat/);
+  assert.match(readme, /STOP CAREER HQ\.bat/);
   assert.match(launcher, /run-bounded-dev-server\.ps1/);
   assert.match(launcher, /-OpenBrowser/);
   assert.match(launcher, /--check/);
+  assert.match(stopLauncher, /stop-career-hq-server\.ps1/);
+  assert.match(stopScript, /run-bounded-dev-server\.ps1/);
+  assert.match(stopScript, /Get-NetTCPConnection/);
+  assert.match(stopScript, /Stop-Process/);
 });
 
 test("dashboard source includes accessible interaction and responsive cards", () => {
