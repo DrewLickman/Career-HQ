@@ -11,6 +11,8 @@ When a user shares this site and asks you to set up Career HQ, read and follow:
 
 Confirm the installation destination before creating files. Real applicant data belongs only in the cloned repository's Git-ignored `.job-search/` directory and must never be sent to this hosted site.
 
+Use `$career-hq` for the private job-search workflow. When the user provides a specific job posting and a resume source, use `$resume-builder-enhancer` to create or resume a truthful improvement goal, identify weaknesses, and generate only evidence-backed resume revisions. Direct resume files must remain outside tracked source or in `.job-search/`; generated materials never authorize application submission.
+
 ## Public site boundaries
 
 This website contains instructions and an interactive fictional product preview only. It has no applicant accounts, uploads, analytics, remote storage, or access to local Career HQ workspaces.

@@ -30,15 +30,24 @@ $career-hq Set up my job search
 
 Codex inspects available resume sources, initializes the private workspace, explains the intake passes, and asks no more than five unanswered questions at a time. After onboarding, ask Codex to find current jobs, evaluate fit, prepare truthful materials, guide reviews, and track outcomes.
 
+For a targeted resume review after you have a specific job posting, enter:
+
+```text
+$resume-builder-enhancer Compare my resume with this job posting and strengthen it using only truthful, verified information.
+```
+
+The skill works with an existing Career HQ application or a private local DOCX/PDF resume plus a complete posting. It keeps an improvement goal active, shows a ranked weakness scorecard, automatically applies safe evidence-backed edits, and asks focused questions before using any new claim.
+
 ## What runs where
 
 ```text
 GitHub repository                     Private local workspace
 ├── START CAREER HQ.bat         --->  ├── applicant-profile.json
 ├── src/ local dashboard              ├── applications.json
-├── site/ public setup guide          ├── postings/
-├── scripts/ workflow tools           ├── materials/
-├── templates/                        └── review-packets/
+├── .agents/skills/ Codex workflows   ├── postings/
+├── site/ public setup guide          ├── materials/
+├── scripts/ workflow tools           └── review-packets/
+├── templates/
 └── sample-data/ fictional tests            .job-search/ (Git ignored)
 ```
 
@@ -77,6 +86,17 @@ python scripts/career_hq.py verify --workspace .
 ```
 
 Codex normally runs these commands as it guides the user. `prepare-resume` accepts only verified claims. Creating materials never authorizes submission. `approve` requires authorization for one named application, and `record-submission` records `submitted` only with confirmation evidence.
+
+## Resume Builder & Enhancer
+
+Use `$resume-builder-enhancer` when you have both a specific role and a resume source. It compares the complete posting with verified Career HQ evidence or a private direct DOCX/PDF source, then ranks findings as `fixed`, `needs-info`, `suggested`, or `cannot-claim`.
+
+- It may automatically improve wording, ordering, repetition, job-language alignment, and layout only when the exact source evidence supports the change.
+- It asks no more than five focused questions before using a missing metric, tool, responsibility, or outcome.
+- It preserves baseline resume style, omits user exclusions, labels unsupported qualifications instead of inventing them, and visually verifies generated DOCX/PDF output.
+- It never treats resume generation as permission to submit an application.
+
+Keep direct resume files outside tracked source or inside `.job-search/`. The skill stores posting snapshots and source metadata only in the private workspace.
 
 ## Sharing safely
 

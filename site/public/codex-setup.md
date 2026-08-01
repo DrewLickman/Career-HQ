@@ -14,11 +14,13 @@ Canonical repository: https://github.com/DrewLickman/Career-HQ
 6. Run `python scripts/career_hq.py verify --workspace .`, `python scripts/privacy_scan.py . --release`, and `npm test`. Resolve failures before describing the project as ready.
 7. Continue with the repository's `.agents/skills/career-hq/SKILL.md`. Initialize with `python scripts/career_hq.py init --workspace .`, inspect existing profile and resume sources, and run `python scripts/career_hq.py questions --workspace .`.
 8. Explain the five intake passes: search direction, career evidence, application defaults, sensitive answers when relevant, and tracking preferences. Ask only unanswered questions and never more than five in one message.
-9. If the current Codex conversation cannot continue inside the new project, tell the user to open the cloned `Career-HQ` folder in Codex and enter exactly: `$career-hq Set up my job search`.
+9. When the user has a specific job posting and resume source, use `.agents/skills/resume-builder-enhancer/SKILL.md`. It creates or resumes a truthful resume-improvement goal, ranks weaknesses, applies only verified safe changes, and asks focused questions for missing facts. Resume generation does not authorize submission.
+10. If the current Codex conversation cannot continue inside the new project, tell the user to open the cloned `Career-HQ` folder in Codex and enter exactly: `$career-hq Set up my job search`.
 
 ## Hard boundaries
 
 - Never upload, publish, or place real applicant values in tracked files, fixtures, tests, screenshots, build output, or this hosted site.
+- For direct resume enhancement, use only a DOCX/PDF stored outside tracked source or inside `.job-search/`; store source metadata and posting snapshots only in the private workspace.
 - Never store passwords, one-time codes, government identifiers, financial details, or medical information in Career HQ.
 - Creating application materials does not authorize submission.
 - Require explicit authorization for one named application and confirmation evidence before recording it as `submitted`.
