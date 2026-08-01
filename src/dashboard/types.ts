@@ -65,6 +65,13 @@ export type Application = {
   updatedAt: string;
 };
 
+export type JobPreference = {
+  id: string;
+  label: string;
+  value: string;
+  verifiedAt: string;
+};
+
 export type DashboardData = {
   private: true;
   workspaceStatus: "needs-setup" | "ready" | "error";
@@ -72,5 +79,6 @@ export type DashboardData = {
   today: string;
   generatedAt: string;
   applications: Application[];
+  preferences: JobPreference[];
   message?: string;
 };

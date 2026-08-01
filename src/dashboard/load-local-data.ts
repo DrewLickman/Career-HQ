@@ -5,6 +5,7 @@ import type {
   DashboardData,
   Fit,
   ImportantAnswer,
+  JobPreference,
   MaterialVersion,
   PostingSnapshot,
 } from "./types";
@@ -60,6 +61,57 @@ function objects(value: unknown): JsonObject[] {
 function evidenceValue(value: unknown): unknown {
   const item = object(value);
   return item.verified === true ? item.value : undefined;
+}
+
+function labelFromKey(value: string): string {
+  const words = value
+    .replaceAll("_", " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function preferenceValue(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return new Intl.NumberFormat("en-US").format(value);
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (Array.isArray(value)) {
+    return value.map(preferenceValue).filter(Boolean).join(", ");
+  }
+  const item = object(value);
+  return Object.entries(item)
+    .map(([key, nestedValue]) => {
+      const formatted = preferenceValue(nestedValue);
+      return formatted ? `${labelFromKey(key)}: ${formatted}` : "";
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+const preferenceFields = [
+  ["targetRoles", "Roles to pursue"],
+  ["avoidedRoles", "Roles to avoid"],
+  ["experienceLevel", "Experience level"],
+  ["geography", "Location and commute"],
+  ["workArrangement", "Work setup"],
+  ["compensation", "Compensation and employment"],
+  ["industries", "Industry preferences"],
+] as const;
+
+function preferencesFrom(profileValue: unknown): JobPreference[] {
+  const searchDirection = object(object(profileValue).searchDirection);
+  return preferenceFields.flatMap(([id, label]) => {
+    const evidence = object(searchDirection[id]);
+    if (evidence.verified !== true) return [];
+    const value = preferenceValue(evidence.value);
+    if (!value) return [];
+    return [{
+      id,
+      label,
+      value,
+      verifiedAt: text(evidence.verifiedAt, ""),
+    }];
+  });
 }
 
 async function readJson(path: string): Promise<unknown | null> {
@@ -223,6 +275,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
         generatedAt: "Not initialized",
         applicant: { displayName: "Your", targetLane: "Complete onboarding to set target roles" },
         applications: [],
+        preferences: [],
         message: "Open this repository in Codex and run: $career-hq Set up my job search",
       };
     }
@@ -243,6 +296,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
       generatedAt: text(ledger.updatedAt, "Local workspace"),
       applicant: applicantFrom(profileValue),
       applications,
+      preferences: preferencesFrom(profileValue),
       message: applications.length
         ? undefined
         : "Onboarding is ready. Ask Codex to find and evaluate the first job.",
@@ -255,6 +309,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
       generatedAt: "Read error",
       applicant: { displayName: "Your", targetLane: "Local workspace needs attention" },
       applications: [],
+      preferences: [],
       message: "Career HQ could not read the local JSON files. Ask Codex to run the workspace verification command.",
     };
   }

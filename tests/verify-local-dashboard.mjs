@@ -60,11 +60,21 @@ assert.match(insights.visibleHtml, /A quieter view of the bigger picture/);
 assert.match(insights.visibleHtml, /Strongest role lane/);
 assert.match(insights.visibleHtml, /Action load/);
 
+const preferences = await page("/?view=preferences");
+assert.match(preferences.visibleHtml, /What Career HQ should look for/);
+assert.match(preferences.visibleHtml, /Your current search boundaries/);
+assert.match(preferences.visibleHtml, /2 verified preferences/);
+assert.match(preferences.visibleHtml, /Roles to pursue/);
+assert.match(preferences.visibleHtml, /Local Systems Specialist/);
+assert.match(preferences.visibleHtml, /Experience level/);
+assert.match(preferences.visibleHtml, /Early-career roles only/);
+assert.doesNotMatch(preferences.visibleHtml, /Unverified senior test role/);
+
 const invalidView = await page("/?view=not-a-dashboard-view");
 assert.match(invalidView.visibleHtml, /Your next move, clearly/);
 assert.doesNotMatch(invalidView.visibleHtml, /Application tracker/);
 
-for (const rendered of [overview, applications, needsAction, insights, invalidView]) {
+for (const rendered of [overview, applications, needsAction, insights, preferences, invalidView]) {
   assert.match(rendered.visibleHtml, />CHQ</);
   assert.doesNotMatch(rendered.html, /local-test-001-resume-v00[12]|materials\/local-test/);
   assert.doesNotMatch(rendered.html, /Local by design|Local files only|Private local workspace|reads private local files/);

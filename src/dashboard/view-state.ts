@@ -1,6 +1,6 @@
 import type { Application } from "./types";
 
-export const dashboardViews = ["overview", "applications", "insights"] as const;
+export const dashboardViews = ["overview", "applications", "insights", "preferences"] as const;
 export type DashboardView = (typeof dashboardViews)[number];
 
 export const applicationFilters = [

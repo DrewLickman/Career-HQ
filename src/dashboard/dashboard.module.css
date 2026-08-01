@@ -48,12 +48,14 @@
 .brand strong { font-size: 16px; }
 .brand small { color: #929ca8; font-size: 12px; }
 
-.nav {
+.nav,
+.utilityNav {
   display: grid;
   gap: 8px;
 }
 
-.nav a {
+.nav a,
+.utilityNav a {
   min-height: 58px;
   padding: 10px 12px;
   border: 1px solid transparent;
@@ -66,9 +68,12 @@
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
-.nav a strong { font-size: 15px; font-weight: 720; }
-.nav a span { color: #7e8996; font-size: 12px; }
-.nav a:hover { border-color: var(--line); background: rgb(255 255 255 / 4%); color: white; }
+.nav a strong,
+.utilityNav a strong { font-size: 15px; font-weight: 720; }
+.nav a span,
+.utilityNav a span { color: #7e8996; font-size: 12px; }
+.nav a:hover,
+.utilityNav a:hover { border-color: var(--line); background: rgb(255 255 255 / 4%); color: white; }
 .navActive {
   border-color: rgb(185 255 74 / 24%) !important;
   background: var(--signal-soft) !important;
@@ -76,8 +81,9 @@
 }
 .navActive span { color: #c5d3b1 !important; }
 
+.utilityNav { margin-top: auto; }
+
 .sidebarStatus {
-  margin-top: auto;
   padding: 13px;
   border: 1px solid var(--line);
   border-radius: 11px;
@@ -224,7 +230,8 @@
 .priorityPanel,
 .pipelinePanel,
 .applicationWorkspace,
-.insightsView {
+.insightsView,
+.preferencesView {
   border: 1px solid var(--line);
   border-radius: 15px;
   background: var(--card);
@@ -233,7 +240,8 @@
 .priorityPanel,
 .pipelinePanel,
 .applicationWorkspace,
-.insightsView { padding: 24px; }
+.insightsView,
+.preferencesView { padding: 24px; }
 
 .sectionHeading,
 .workspaceHeading {
@@ -361,6 +369,7 @@
 
 .applicationWorkspace,
 .insightsView { margin-top: 20px; }
+.preferencesView { margin-top: 20px; }
 .controls { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(210px, 280px); gap: 10px; margin: 22px 0 14px; }
 .searchField,
 .filterField { display: grid; gap: 7px; color: #b6bec7; font-size: 13px; font-weight: 700; }
@@ -453,7 +462,7 @@
 .detailOverviewMain { min-width: 0; border-right: 1px solid var(--line); }
 .detailHeader { padding: 20px; display: flex; gap: 12px; align-items: center; }
 .detailHeader .companyMark { background: var(--signal); color: #11170a; }
-.detailHeader p { margin: 0 0 2px; color: #a5afba; font-size: 13px; }
+.detailHeader p { margin: 4px 0 2px; color: #a5afba; font-size: 13px; }
 .detailHeader h3 { margin: 0; color: #f2f5f7; font-size: 22px; line-height: 1.25; }
 .detailHeader span { color: #929ca8; font-size: 14px; }
 
@@ -554,6 +563,27 @@
 .insightCard p,
 .insightCardAccent p { margin: 0; color: #98a2ad; font-size: 14px; }
 
+.preferenceGrid {
+  margin: 22px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+}
+.preferenceCard {
+  min-width: 0;
+  min-height: 158px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #0b1017;
+  display: flex;
+  flex-direction: column;
+}
+.preferenceCard dt { color: var(--signal); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.preferenceCard dd { margin: 13px 0; color: #edf1f3; font-size: 17px; line-height: 1.55; overflow-wrap: anywhere; }
+.preferenceCard small { margin-top: auto; color: #87929e; font-size: 12px; }
+.preferenceBoundary { margin: 18px 0 0; color: #8f99a5; font-size: 13px; line-height: 1.55; }
+
 .copyToast {
   position: fixed;
   right: 24px;
@@ -601,10 +631,15 @@
   .brand > span:last-child,
   .sidebarStatus { display: none; }
   .brandMark { width: 38px; height: 38px; }
-  .nav { display: flex; gap: 5px; }
-  .nav a { min-height: 40px; padding: 8px 11px; display: flex; align-items: center; }
-  .nav a strong { font-size: 14px; }
-  .nav a span { display: none; }
+  .nav,
+  .utilityNav { display: flex; gap: 5px; }
+  .utilityNav { margin-top: 0; }
+  .nav a,
+  .utilityNav a { min-height: 40px; padding: 8px 11px; display: flex; align-items: center; }
+  .nav a strong,
+  .utilityNav a strong { font-size: 14px; }
+  .nav a span,
+  .utilityNav a span { display: none; }
   .main { padding: 24px 15px 18px; }
   .header { display: block; }
   .header h1 { font-size: 36px; }
@@ -612,7 +647,8 @@
   .priorityPanel,
   .pipelinePanel,
   .applicationWorkspace,
-  .insightsView { padding: 18px; }
+  .insightsView,
+  .preferencesView { padding: 18px; }
   .sectionHeading,
   .workspaceHeading { align-items: flex-start; }
   .priorityItem { grid-template-columns: 1fr; }
@@ -634,7 +670,8 @@
   .detailMeta,
   .factList { grid-template-columns: 1fr; }
   .detailTabs { overflow-x: auto; }
-  .insightGrid { grid-template-columns: 1fr; }
+  .insightGrid,
+  .preferenceGrid { grid-template-columns: 1fr; }
   .copyToast { right: 16px; bottom: 16px; }
 }
 

@@ -44,11 +44,13 @@ function application(id, overrides = {}) {
 
 test("normalizes dashboard URLs and falls back safely", () => {
   assert.equal(normalizeDashboardView("applications"), "applications");
+  assert.equal(normalizeDashboardView("preferences"), "preferences");
   assert.equal(normalizeDashboardView(["insights", "overview"]), "insights");
   assert.equal(normalizeDashboardView("unknown"), "overview");
   assert.equal(normalizeApplicationFilter("needs-action"), "needs-action");
   assert.equal(normalizeApplicationFilter("unknown"), "active");
   assert.equal(dashboardHref("overview"), "/?view=overview");
+  assert.equal(dashboardHref("preferences"), "/?view=preferences");
   assert.equal(dashboardHref("applications", "needs-action"), "/?view=applications&filter=needs-action");
 });
 

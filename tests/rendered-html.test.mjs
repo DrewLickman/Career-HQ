@@ -24,7 +24,11 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
   writeFileSync(join(privateRoot, "materials", "local-test", "local-test-001-resume-v002.docx"), "current fictional Word bytes");
   writeFileSync(join(privateRoot, "applicant-profile.json"), JSON.stringify({
     identity: { displayName: { value: "Local Test Candidate", source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
-    searchDirection: { targetRoles: { value: ["Local Systems Specialist"], source: "test-fixture", verifiedAt: "2026-07-22", verified: true } },
+    searchDirection: {
+      targetRoles: { value: ["Local Systems Specialist"], source: "test-fixture", verifiedAt: "2026-07-22", verified: true },
+      experienceLevel: { value: "Early-career roles only", source: "test-fixture", verifiedAt: "2026-07-22", verified: true },
+      avoidedRoles: { value: ["Unverified senior test role"], source: "test-fixture", verifiedAt: "2026-07-22", verified: false },
+    },
   }));
   writeFileSync(join(privateRoot, "applications.json"), JSON.stringify({
     updatedAt: "2026-07-22T12:00:00Z",
@@ -175,6 +179,10 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(component, /Overview/);
   assert.match(component, /Applications/);
   assert.match(component, /Insights/);
+  assert.match(component, /Preferences/);
+  assert.match(component, /Personal settings/);
+  assert.match(component, /Known preferences/);
+  assert.match(component, /dashboard\.preferences/);
   assert.match(component, /window\.history\.pushState/);
   assert.match(component, /window\.history\.replaceState/);
   assert.match(component, /popstate/);

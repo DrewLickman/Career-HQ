@@ -37,6 +37,10 @@ const navigation: { id: DashboardView; label: string; note: string }[] = [
   { id: "insights", label: "Insights", note: "Patterns in your search" },
 ];
 
+const utilityNavigation: { id: DashboardView; label: string; note: string }[] = [
+  { id: "preferences", label: "Preferences", note: "Your job-search rules" },
+];
+
 const fitLabels: Record<string, string> = {
   "strong-match": "Strong match",
   "reasonable-stretch": "Reasonable stretch",
@@ -310,6 +314,21 @@ export function CareerDashboard({
           ))}
         </nav>
 
+        <nav className={styles.utilityNav} aria-label="Personal settings">
+          {utilityNavigation.map((item) => (
+            <a
+              className={activeView === item.id ? styles.navActive : undefined}
+              href={dashboardHref(item.id)}
+              aria-current={activeView === item.id ? "page" : undefined}
+              onClick={(event) => handleViewLink(event, item.id)}
+              key={item.id}
+            >
+              <strong>{item.label}</strong>
+              <span>{item.note}</span>
+            </a>
+          ))}
+        </nav>
+
         <div className={styles.sidebarStatus} data-state={dashboard.workspaceStatus}>
           <span aria-hidden="true" />
           <div>
@@ -382,6 +401,10 @@ export function CareerDashboard({
           />
         )}
 
+        {activeView === "preferences" && (
+          <PreferencesView preferences={dashboard.preferences} />
+        )}
+
         {copyMessage && (
           <div className={styles.copyToast} role="status" aria-live="polite">{copyMessage}</div>
         )}
@@ -422,6 +445,11 @@ function DashboardHeader({
       kicker: "Search signals",
       title: "Patterns worth noticing.",
       intro: "Use what the pipeline shows to focus effort without manufacturing qualifications.",
+    },
+    preferences: {
+      kicker: "Job-search preferences",
+      title: "What Career HQ should look for.",
+      intro: "These verified preferences guide which opportunities Career HQ prioritizes and avoids.",
     },
   }[view];
 
@@ -688,6 +716,39 @@ function InsightsView({
   );
 }
 
+function PreferencesView({ preferences }: { preferences: DashboardData["preferences"] }) {
+  return (
+    <section className={styles.preferencesView} aria-labelledby="preferences-heading">
+      <div className={styles.workspaceHeading}>
+        <div>
+          <p className={styles.eyebrow}>Known preferences</p>
+          <h2 id="preferences-heading">Your current search boundaries.</h2>
+        </div>
+        <span>{preferences.length} verified {preferences.length === 1 ? "preference" : "preferences"}</span>
+      </div>
+
+      {preferences.length ? (
+        <dl className={styles.preferenceGrid}>
+          {preferences.map((preference) => (
+            <div className={styles.preferenceCard} key={preference.id}>
+              <dt>{preference.label}</dt>
+              <dd>{preference.value}</dd>
+              <small>{preference.verifiedAt ? `Verified ${formatTimestamp(preference.verifiedAt)}` : "Verified preference"}</small>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <div className={styles.emptyDetail}>
+          <strong>No verified job preferences yet.</strong>
+          <p>Complete onboarding with Codex and your search boundaries will appear here.</p>
+        </div>
+      )}
+
+      <p className={styles.preferenceBoundary}>Only verified job-search preferences from your private local profile are shown here.</p>
+    </section>
+  );
+}
+
 function SectionHeading({
   kicker,
   title,
@@ -791,8 +852,8 @@ function ApplicationDetail({
           <div className={styles.detailHeader}>
             <span className={styles.companyMark} aria-hidden="true">{application.employer.slice(0, 2).toUpperCase()}</span>
             <div>
-              <p>{application.employer}</p>
               <h3>{application.role}</h3>
+              <p>{application.employer}</p>
               <span>{application.location} · {application.arrangement}</span>
             </div>
           </div>
