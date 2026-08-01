@@ -786,47 +786,55 @@ function ApplicationDetail({
 
   return (
     <article className={styles.detail} id="application-detail" aria-live="polite">
-      <div className={styles.detailHeader}>
-        <span className={styles.companyMark} aria-hidden="true">{application.employer.slice(0, 2).toUpperCase()}</span>
-        <div>
-          <p>{application.employer}</p>
-          <h3>{application.role}</h3>
-          <span>{application.location} · {application.arrangement}</span>
-        </div>
-      </div>
+      <div className={styles.detailOverview}>
+        <div className={styles.detailOverviewMain}>
+          <div className={styles.detailHeader}>
+            <span className={styles.companyMark} aria-hidden="true">{application.employer.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <p>{application.employer}</p>
+              <h3>{application.role}</h3>
+              <span>{application.location} · {application.arrangement}</span>
+            </div>
+          </div>
 
-      <div className={styles.detailTabs} role="tablist" aria-label="Application details">
-        {tabs.map((tab) => (
-          <button
-            type="button"
-            role="tab"
-            id={`detail-tab-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`detail-panel-${tab.id}`}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            className={activeTab === tab.id ? styles.detailTabActive : styles.detailTab}
-            onClick={() => setActiveTab(tab.id)}
-            key={tab.id}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "summary" && (
-        <section className={styles.detailPanel} role="tabpanel" id="detail-panel-summary" aria-labelledby="detail-tab-summary">
-          <section className={styles.jobSummary} aria-labelledby="job-summary-heading">
-            <h4 id="job-summary-heading">What the job actually is</h4>
-            <p>{application.jobSummary}</p>
-          </section>
+          <div className={styles.detailTabs} role="tablist" aria-label="Application details">
+            {tabs.map((tab) => (
+              <button
+                type="button"
+                role="tab"
+                id={`detail-tab-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                aria-controls={`detail-panel-${tab.id}`}
+                tabIndex={activeTab === tab.id ? 0 : -1}
+                className={activeTab === tab.id ? styles.detailTabActive : styles.detailTab}
+                onClick={() => setActiveTab(tab.id)}
+                key={tab.id}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
           <div className={styles.detailMeta}>
             <DetailFact label="Status" value={statusLabels[application.status] ?? application.status} />
             <DetailFact label="Fit" value={fitLabels[application.fit]} />
             <DetailFact label="Compensation" value={application.compensation} />
             <DetailFact label="Work setup" value={application.arrangement} />
+            <DetailFact label="Employment type" value={application.employmentType} />
+            <DetailFact label="Location" value={application.location} />
+            <DetailFact label="Added" value={formatTimestamp(application.createdAt)} />
+            <DetailFact label="Last updated" value={formatTimestamp(application.updatedAt)} />
           </div>
+        </div>
 
+        <section className={styles.jobSummary} aria-labelledby="job-summary-heading">
+          <h4 id="job-summary-heading">What the job actually is</h4>
+          <p>{application.jobSummary}</p>
+        </section>
+      </div>
+
+      {activeTab === "summary" && (
+        <section className={styles.detailPanel} role="tabpanel" id="detail-panel-summary" aria-labelledby="detail-tab-summary">
           <div className={styles.nextAction}>
             <span>Next action · {formatDate(application.nextActionDate)}</span>
             <strong>{application.nextAction}</strong>
@@ -842,14 +850,6 @@ function ApplicationDetail({
             </dl>
           </DetailSection>
 
-          <DetailSection title="Job details">
-            <dl className={styles.factList}>
-              <DetailFact label="Employment type" value={application.employmentType} />
-              <DetailFact label="Location" value={application.location} />
-              <DetailFact label="Added" value={formatTimestamp(application.createdAt)} />
-              <DetailFact label="Last updated" value={formatTimestamp(application.updatedAt)} />
-            </dl>
-          </DetailSection>
         </section>
       )}
 

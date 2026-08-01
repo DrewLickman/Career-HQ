@@ -3,7 +3,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import runpy
 from pathlib import Path
+
+from docx import Document
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -13,6 +18,50 @@ CLI = REPO / "scripts" / "career_hq.py"
 class CareerHQWorkflowTests(unittest.TestCase):
     def run_cli(self, *args, cwd=None, check=True):
         return subprocess.run([sys.executable, str(CLI), *args], cwd=cwd or REPO, text=True, capture_output=True, check=check)
+
+    def test_resume_contact_block_is_wide_centered_and_evenly_distributed(self):
+        resume_builder = runpy.run_path(str(REPO / ".agents" / "skills" / "career-hq" / "scripts" / "career_hq.py"))
+        evidence = {
+            "name": "Avery Rowan",
+            "phone": "fictional-phone",
+            "location": "Madison, Wisconsin",
+            "email": "avery.rowan@example.test",
+            "links": [
+                {"url": "https://linkedin.example.test/avery-rowan"},
+                {"url": "https://github.example.test/avery-rowan"},
+                {"url": "https://avery-rowan.example.test"},
+            ],
+            "summary": "Fictional implementation specialist.",
+            "skills": [],
+            "experience": [],
+            "projects": [],
+            "education": [],
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / "fictional-resume.docx"
+            resume_builder["build_docx"](output, evidence, {"role": "Implementation Specialist"})
+            document = Document(output)
+
+        self.assertEqual(len(document.tables), 1)
+        self.assertEqual(document.paragraphs[1].text, "Implementation Specialist")
+        self.assertEqual(document.paragraphs[1].alignment, WD_ALIGN_PARAGRAPH.CENTER)
+        contact_table = document.tables[0]
+        self.assertEqual(contact_table.alignment, WD_TABLE_ALIGNMENT.CENTER)
+        self.assertFalse(contact_table.autofit)
+        self.assertEqual(len(contact_table.rows), 2)
+        self.assertTrue(all(len(row.cells) == 3 for row in contact_table.rows))
+        self.assertEqual(
+            [[cell.text for cell in row.cells] for row in contact_table.rows],
+            [
+                ["fictional-phone", "Madison, Wisconsin", "avery.rowan@example.test"],
+                ["linkedin.example.test/avery-rowan", "github.example.test/avery-rowan", "avery-rowan.example.test"],
+            ],
+        )
+        self.assertTrue(all(round(cell.width.inches, 2) == 2.15 for row in contact_table.rows for cell in row.cells))
+
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaisesRegex(SystemExit, "role title is required"):
+                resume_builder["build_docx"](Path(folder) / "missing-role.docx", evidence, {})
 
     def test_init_questions_and_conflict_preservation(self):
         with tempfile.TemporaryDirectory() as folder:

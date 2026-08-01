@@ -185,6 +185,11 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(component, /What the job actually is/);
   assert.doesNotMatch(component, /What you would do/);
   assert.match(component, /DetailFact label="Work setup" value=\{application\.arrangement\}/);
+  assert.match(component, /DetailFact label="Employment type" value=\{application\.employmentType\}/);
+  assert.match(component, /DetailFact label="Location" value=\{application\.location\}/);
+  assert.match(component, /DetailFact label="Added" value=\{formatTimestamp\(application\.createdAt\)\}/);
+  assert.match(component, /DetailFact label="Last updated" value=\{formatTimestamp\(application\.updatedAt\)\}/);
+  assert.doesNotMatch(component, /DetailSection title="Job details"/);
   assert.match(component, /Search applications/);
   assert.match(component, /Filter by status/);
   assert.match(component, /Active applications/);
@@ -201,7 +206,10 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.doesNotMatch(component, /Priority queue/);
   assert.match(css, /\.priorityList/);
   assert.match(css, /\.detailTabs/);
+  assert.match(css, /\.detailOverview/);
+  assert.match(css, /\.detailOverviewMain/);
   assert.match(css, /\.jobSummary/);
+  assert.match(css, /\.detail \{[\s\S]*?position: static;/);
   assert.match(css, /\.detailMeta \{ display: grid; grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css, /\.copyToast/);
   assert.match(css, /\.workspacePill/);

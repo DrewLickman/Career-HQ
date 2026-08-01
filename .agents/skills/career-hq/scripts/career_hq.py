@@ -512,10 +512,20 @@ def next_version(directory: Path, application_id: str) -> int:
     return max(versions, default=0) + 1
 
 
+def resume_role_title(application: dict[str, Any]) -> str:
+    role_title = str(application.get("role") or "").strip()
+    if not role_title:
+        raise SystemExit("A saved application role title is required for every resume header.")
+    return role_title
+
+
 def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, Any]) -> None:
+    role_title = resume_role_title(application)
     try:
         from docx import Document
+        from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
         from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml import OxmlElement
         from docx.oxml.ns import qn
         from docx.shared import Inches, Pt, RGBColor
     except ImportError as exc:
@@ -540,14 +550,74 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title.paragraph_format.space_after = Pt(1)
     run = title.add_run(str(evidence["name"])); run.font.name = "Arial"; run._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); run.font.size = Pt(20); run.bold = True; run.font.color.rgb = RGBColor(23, 32, 27)
-    contact = document.add_paragraph()
-    contact.alignment = WD_ALIGN_PARAGRAPH.CENTER; contact.paragraph_format.space_after = Pt(1)
-    contact.add_run(" | ".join(value for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email")) if value))
+    target_role = document.add_paragraph()
+    target_role.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    target_role.paragraph_format.space_after = Pt(2)
+    target_role_run = target_role.add_run(role_title)
+    target_role_run.font.name = "Arial"
+    target_role_run._element.rPr.rFonts.set(qn("w:ascii"), "Arial")
+    target_role_run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial")
+    target_role_run.font.size = Pt(11)
+    target_role_run.bold = True
+    target_role_run.font.color.rgb = RGBColor(23, 32, 27)
+    contact_rows = [
+        [str(value or "") for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email"))],
+    ]
     if evidence.get("links"):
-        links = document.add_paragraph()
-        links.alignment = WD_ALIGN_PARAGRAPH.CENTER; links.paragraph_format.space_after = Pt(6)
-        links_run = links.add_run(" | ".join(str(link["url"]).removeprefix("https://").rstrip("/") for link in evidence["links"]))
-        links_run.font.size = Pt(8.6)
+        link_values = [
+            str(link["url"]).removeprefix("https://").rstrip("/")
+            for link in evidence["links"]
+        ]
+        contact_rows.extend(link_values[index:index + 3] for index in range(0, len(link_values), 3))
+    for row in contact_rows:
+        row.extend([""] * (3 - len(row)))
+
+    contact_table = document.add_table(rows=len(contact_rows), cols=3)
+    contact_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    contact_table.autofit = False
+    table_width_twips = 9288  # 6.45 inches: wide, but still inset from the 7.1-inch text area.
+    column_width_twips = table_width_twips // 3
+    table_properties = contact_table._tbl.tblPr
+    table_width = table_properties.first_child_found_in("w:tblW")
+    table_width.set(qn("w:w"), str(table_width_twips))
+    table_width.set(qn("w:type"), "dxa")
+    table_layout = OxmlElement("w:tblLayout")
+    table_layout.set(qn("w:type"), "fixed")
+    table_properties.append(table_layout)
+    table_borders = OxmlElement("w:tblBorders")
+    for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        border = OxmlElement(f"w:{edge}")
+        border.set(qn("w:val"), "nil")
+        table_borders.append(border)
+    table_properties.append(table_borders)
+    for grid_column in contact_table._tbl.tblGrid.gridCol_lst:
+        grid_column.set(qn("w:w"), str(column_width_twips))
+
+    for row_index, values in enumerate(contact_rows):
+        for cell, value in zip(contact_table.rows[row_index].cells, values):
+            cell.width = Inches(2.15)
+            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+            cell_width = cell._tc.get_or_add_tcPr().get_or_add_tcW()
+            cell_width.set(qn("w:w"), str(column_width_twips))
+            cell_width.set(qn("w:type"), "dxa")
+            cell_margins = OxmlElement("w:tcMar")
+            for edge, twips in (
+                ("top", 0 if row_index == 0 else 60),
+                ("bottom", 100 if row_index == len(contact_rows) - 1 else 60),
+                ("left", 60),
+                ("right", 60),
+            ):
+                margin = OxmlElement(f"w:{edge}")
+                margin.set(qn("w:w"), str(twips))
+                margin.set(qn("w:type"), "dxa")
+                cell_margins.append(margin)
+            cell._tc.get_or_add_tcPr().append(cell_margins)
+            paragraph = cell.paragraphs[0]
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            paragraph.paragraph_format.space_before = Pt(0)
+            paragraph.paragraph_format.space_after = Pt(0)
+            contact_run = paragraph.add_run(value)
+            contact_run.font.size = Pt(8.6 if row_index else 9.0)
 
     document.add_heading("PROFESSIONAL SUMMARY", level=1)
     document.add_paragraph(str(evidence["summary"]))
@@ -629,30 +699,57 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
 
 
 def build_pdf(output: Path, evidence: dict[str, Any], application: dict[str, Any]) -> None:
+    role_title = resume_role_title(application)
     try:
         from reportlab.lib.colors import HexColor
         from reportlab.lib.enums import TA_CENTER
         from reportlab.lib.pagesizes import LETTER
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import Paragraph, SimpleDocTemplate
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
     except ImportError as exc:
         raise SystemExit("Install requirements.txt before generating resumes.") from exc
 
     styles = getSampleStyleSheet()
     body = ParagraphStyle("ResumeBody", parent=styles["BodyText"], fontName="Helvetica", fontSize=8.9, leading=9.7, spaceAfter=1, textColor=HexColor("#17201B"))
     title = ParagraphStyle("ResumeTitle", parent=body, fontName="Helvetica-Bold", fontSize=19, leading=20, alignment=TA_CENTER, spaceAfter=0.5)
+    target_role = ParagraphStyle("ResumeTargetRole", parent=body, fontName="Helvetica-Bold", fontSize=10.5, leading=11.5, alignment=TA_CENTER, spaceAfter=1.5)
     contact = ParagraphStyle("ResumeContact", parent=body, fontSize=8.4, leading=9.2, alignment=TA_CENTER, spaceAfter=0.5)
     heading = ParagraphStyle("ResumeHeading", parent=body, fontName="Helvetica-Bold", fontSize=10.8, leading=11.8, spaceBefore=4.5, spaceAfter=1.5, keepWithNext=True)
     role = ParagraphStyle("ResumeRole", parent=body, fontName="Helvetica-Bold", spaceBefore=2.5, spaceAfter=0, keepWithNext=True)
     bullet = ParagraphStyle("ResumeBullet", parent=body, leftIndent=15, firstLineIndent=-7.5, bulletIndent=4, spaceAfter=0)
-    story = [Paragraph(escape(str(evidence["name"])), title)]
-    story.append(Paragraph(escape(" | ".join(value for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email")) if value)), contact))
+    story = [
+        Paragraph(escape(str(evidence["name"])), title),
+        Paragraph(escape(role_title), target_role),
+    ]
+    contact_rows = [
+        [str(value or "") for value in (evidence.get("phone"), evidence.get("location"), evidence.get("email"))],
+    ]
     if evidence.get("links"):
-        story.append(Paragraph(
-            escape(" | ".join(str(link["url"]).removeprefix("https://").rstrip("/") for link in evidence["links"])),
-            contact,
-        ))
+        link_values = [
+            str(link["url"]).removeprefix("https://").rstrip("/")
+            for link in evidence["links"]
+        ]
+        contact_rows.extend(link_values[index:index + 3] for index in range(0, len(link_values), 3))
+    for row in contact_rows:
+        row.extend([""] * (3 - len(row)))
+    contact_table = Table(
+        [[Paragraph(escape(value), contact) for value in row] for row in contact_rows],
+        colWidths=[2.15 * inch] * 3,
+        hAlign="CENTER",
+    )
+    contact_table_style = [
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 3),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, 0), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 3),
+        ("BOTTOMPADDING", (0, -1), (-1, -1), 5),
+    ]
+    if len(contact_rows) > 1:
+        contact_table_style.append(("TOPPADDING", (0, 1), (-1, -1), 3))
+    contact_table.setStyle(TableStyle(contact_table_style))
+    story.append(contact_table)
     story.extend([Paragraph("PROFESSIONAL SUMMARY", heading), Paragraph(escape(str(evidence["summary"])), body)])
     if evidence["skills"]:
         story.extend([Paragraph("TECHNICAL SKILLS", heading), Paragraph(escape(" | ".join(str(skill["value"]) for skill in evidence["skills"])), body)])
