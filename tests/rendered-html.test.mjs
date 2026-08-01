@@ -107,6 +107,7 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
       "-HoldAfterReadySeconds", "0",
       "-MaxRuntimeSeconds", "30",
       "-MemoryLimitMB", "1024",
+      "-InstanceScope", workspace,
     ], {
       cwd: REPO,
       encoding: "utf8",
@@ -184,6 +185,7 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(component, /Full saved posting/);
   assert.match(component, /What the job actually is/);
   assert.doesNotMatch(component, /What you would do/);
+  assert.match(component, /<h3>\{application\.role\}<\/h3>\s*<p>\{application\.employer\}<\/p>/);
   assert.match(component, /DetailFact label="Work setup" value=\{application\.arrangement\}/);
   assert.match(component, /DetailFact label="Employment type" value=\{application\.employmentType\}/);
   assert.match(component, /DetailFact label="Location" value=\{application\.location\}/);

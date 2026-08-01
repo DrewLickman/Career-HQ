@@ -22,6 +22,8 @@ function guardArgs(extra, includeWorkingDirectory = true) {
     "",
     "-PollIntervalMs",
     "50",
+    "-InstanceScope",
+    "career-hq-dev-server-guard-tests",
   ];
   if (includeWorkingDirectory) args.push("-WorkingDirectory", REPO);
   return [...args, ...extra];
@@ -49,6 +51,20 @@ function processExists(pid) {
   } catch {
     return false;
   }
+}
+
+function collectChild(child) {
+  let stdout = "";
+  let stderr = "";
+  child.stdout?.setEncoding("utf8");
+  child.stderr?.setEncoding("utf8");
+  child.stdout?.on("data", (chunk) => { stdout += chunk; });
+  child.stderr?.on("data", (chunk) => { stderr += chunk; });
+  const completed = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (status, signal) => resolve({ status, signal, stdout, stderr }));
+  });
+  return { completed };
 }
 
 async function waitFor(predicate, timeoutMs = 5000) {
@@ -189,6 +205,62 @@ test("Windows kills the guarded tree when the wrapper is interrupted", { skip: p
     assert.equal(processExists(fixturePid), false);
   } finally {
     if (!wrapper.killed) wrapper.kill();
+    rmSync(tempDirectory, { recursive: true, force: true });
+  }
+});
+
+test("a new workspace instance cleanly replaces the previous instance", { skip: process.platform !== "win32" }, async () => {
+  const tempDirectory = mkdtempSync(join(tmpdir(), "career-hq-single-instance-"));
+  const firstPidFile = join(tempDirectory, "first.pid");
+  const first = spawn(
+    POWERSHELL,
+    guardArgs([
+      "-Command",
+      FIXTURE_COMMAND,
+      "-HoldAfterReadySeconds",
+      "30",
+      "-MaxRuntimeSeconds",
+      "30",
+      "-MemoryLimitMB",
+      "256",
+    ]),
+    {
+      cwd: REPO,
+      env: { ...process.env, CAREER_HQ_GUARD_TEST_PID_FILE: firstPidFile },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  const firstOutput = collectChild(first);
+
+  try {
+    await waitFor(() => existsSync(firstPidFile));
+    const firstFixturePid = Number(readFileSync(firstPidFile, "utf8"));
+    assert.equal(processExists(firstFixturePid), true);
+
+    const second = runGuard([
+      "-Command",
+      FIXTURE_COMMAND,
+      "-HoldAfterReadySeconds",
+      "1",
+      "-MaxRuntimeSeconds",
+      "5",
+      "-MemoryLimitMB",
+      "256",
+    ]);
+    const firstResult = await firstOutput.completed;
+    const firstSummary = summaryFrom(firstResult);
+    const secondSummary = summaryFrom(second);
+
+    assert.equal(firstResult.status, 0, firstResult.stderr);
+    assert.equal(firstSummary.terminationReason, "superseded");
+    assert.equal(firstSummary.treeStopped, true);
+    assert.equal(processExists(firstFixturePid), false);
+    assert.equal(second.status, 0, second.stderr);
+    assert.match(second.stdout, /Closing the previous Career HQ terminal/);
+    assert.equal(secondSummary.terminationReason, "completed");
+    assert.equal(secondSummary.treeStopped, true);
+  } finally {
+    if (first.exitCode === null && first.signalCode === null) first.kill();
     rmSync(tempDirectory, { recursive: true, force: true });
   }
 });

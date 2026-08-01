@@ -19,6 +19,8 @@ param(
     [string]$VerificationCommand = '',
     [ValidateRange(1, 3600)]
     [int]$VerificationTimeoutSeconds = 120,
+    [AllowEmptyString()]
+    [string]$InstanceScope = '',
     [switch]$OpenBrowser
 )
 
@@ -39,6 +41,66 @@ $workingDirectoryInput = if ([string]::IsNullOrWhiteSpace($WorkingDirectory)) {
     $WorkingDirectory
 }
 $resolvedWorkingDirectory = (Resolve-Path -LiteralPath $workingDirectoryInput).Path
+
+function Get-WorkspaceInstanceKey {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try {
+        $normalizedPath = $Path.TrimEnd([IO.Path]::DirectorySeparatorChar).ToUpperInvariant()
+        $hashBytes = $hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($normalizedPath))
+        return -join ($hashBytes | Select-Object -First 12 | ForEach-Object { $_.ToString('x2') })
+    }
+    finally {
+        $hasher.Dispose()
+    }
+}
+
+$instanceScopeValue = if ([string]::IsNullOrWhiteSpace($InstanceScope)) {
+    $resolvedWorkingDirectory
+} else {
+    $InstanceScope
+}
+$instanceKey = Get-WorkspaceInstanceKey -Path $instanceScopeValue
+$instanceMutex = $null
+$shutdownEvent = $null
+$ownsInstanceMutex = $false
+
+try {
+    $instanceMutex = [Threading.Mutex]::new($false, "Local\CareerHQ-$instanceKey")
+    $shutdownEvent = [Threading.EventWaitHandle]::new(
+        $false,
+        [Threading.EventResetMode]::ManualReset,
+        "Local\CareerHQ-Shutdown-$instanceKey"
+    )
+
+    try {
+        $ownsInstanceMutex = $instanceMutex.WaitOne(0)
+    }
+    catch [Threading.AbandonedMutexException] {
+        $ownsInstanceMutex = $true
+    }
+
+    if (-not $ownsInstanceMutex) {
+        Write-Output 'Closing the previous Career HQ terminal...'
+        $handoffDeadline = [DateTime]::UtcNow.AddSeconds(15)
+        while (-not $ownsInstanceMutex -and [DateTime]::UtcNow -lt $handoffDeadline) {
+            # Repeat the signal so rapid third-and-later launches also replace
+            # whichever waiting instance acquires the mutex ahead of them.
+            [void]$shutdownEvent.Set()
+            try {
+                $ownsInstanceMutex = $instanceMutex.WaitOne(250)
+            }
+            catch [Threading.AbandonedMutexException] {
+                $ownsInstanceMutex = $true
+            }
+        }
+        if (-not $ownsInstanceMutex) {
+            throw 'The previous Career HQ terminal did not close within 15 seconds.'
+        }
+    }
+
+    [void]$shutdownEvent.Reset()
 
 if (-not ('CareerHQ.GuardedProcessJob' -as [type])) {
     Add-Type -Language CSharp -TypeDefinition @'
@@ -415,6 +477,13 @@ try {
 
     while ($true) {
         $elapsedSeconds = $timer.Elapsed.TotalSeconds
+
+        if ($shutdownEvent.WaitOne(0)) {
+            $terminationReason = 'superseded'
+            $wrapperExitStatus = 0
+            break
+        }
+
         $processIds = @($serverJob.GetProcessIds())
         foreach ($processId in $processIds) { [void]$observedProcessIds.Add($processId) }
 
@@ -550,4 +619,16 @@ $summary = [ordered]@{
 
 Write-Output ('CAREER_HQ_DEV_SERVER_SUMMARY ' + ($summary | ConvertTo-Json -Compress))
 if ($errorMessage) { Write-Error $errorMessage }
+}
+finally {
+    if ($ownsInstanceMutex -and $null -ne $instanceMutex) {
+        $instanceMutex.ReleaseMutex()
+    }
+    if ($null -ne $shutdownEvent) {
+        $shutdownEvent.Dispose()
+    }
+    if ($null -ne $instanceMutex) {
+        $instanceMutex.Dispose()
+    }
+}
 exit $wrapperExitStatus
