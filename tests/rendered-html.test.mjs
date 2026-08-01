@@ -182,6 +182,9 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(component, /View all \{tasks\.length\} actions/);
   assert.match(component, /Original source/);
   assert.match(component, /Full saved posting/);
+  assert.match(component, /What the job actually is/);
+  assert.doesNotMatch(component, /What you would do/);
+  assert.match(component, /DetailFact label="Work setup" value=\{application\.arrangement\}/);
   assert.match(component, /Search applications/);
   assert.match(component, /Filter by status/);
   assert.match(component, /Active applications/);
@@ -198,6 +201,8 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.doesNotMatch(component, /Priority queue/);
   assert.match(css, /\.priorityList/);
   assert.match(css, /\.detailTabs/);
+  assert.match(css, /\.jobSummary/);
+  assert.match(css, /\.detailMeta \{ display: grid; grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css, /\.copyToast/);
   assert.match(css, /\.workspacePill/);
   assert.doesNotMatch(component, /Local by design|Local files only|Private local workspace|reads private local files/);

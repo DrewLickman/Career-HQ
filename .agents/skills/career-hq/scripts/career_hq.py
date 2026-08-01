@@ -289,6 +289,7 @@ def cmd_add_job(args: argparse.Namespace) -> None:
         "url": args.url,
         "status": "research",
         "fit": args.fit,
+        "jobSummary": args.job_summary,
         "strongestMatch": args.strongest_match,
         "largestGap": args.largest_gap,
         "risk": args.risk,
@@ -912,7 +913,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("questions"); workspace(p); p.set_defaults(func=cmd_questions)
     p = sub.add_parser("answer"); workspace(p); p.add_argument("--field", required=True); p.add_argument("--value", required=True); p.add_argument("--source", required=True); p.add_argument("--verified-at"); p.add_argument("--correction", action="store_true"); p.set_defaults(func=cmd_answer)
     p = sub.add_parser("add-job"); workspace(p)
-    for name in ("employer", "role", "location", "arrangement", "compensation", "employment-type", "url", "posting-file", "fit", "strongest-match", "largest-gap", "risk", "next-action"):
+    for name in ("employer", "role", "location", "arrangement", "compensation", "employment-type", "url", "posting-file", "fit", "job-summary", "strongest-match", "largest-gap", "risk", "next-action"):
         p.add_argument(f"--{name}", required=True)
     p.add_argument("--id"); p.add_argument("--next-action-date"); p.add_argument("--current-confirmed", action="store_true"); p.add_argument("--credible-source", action="store_true"); p.set_defaults(func=cmd_add_job)
     p = sub.add_parser("prepare-resume"); workspace(p); p.add_argument("--application-id", required=True); p.add_argument("--tailoring-file"); p.set_defaults(func=cmd_prepare_resume)

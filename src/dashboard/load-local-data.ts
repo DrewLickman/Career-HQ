@@ -9,6 +9,7 @@ import type {
   PostingSnapshot,
 } from "./types";
 import { localDateKey } from "./action-center";
+import { normalizeJobSummary, summarizeJobPosting } from "./job-summary";
 
 type JsonObject = Record<string, unknown>;
 
@@ -142,6 +143,7 @@ async function normalizeApplication(value: unknown, index: number, privateRoot: 
   const latestSnapshot = postingSnapshots[postingSnapshots.length - 1];
   const approvalValue = object(item.approval);
   const evidence = object(item.submissionEvidence);
+  const savedJobSummary = text(item.jobSummary, "");
 
   return {
     id: text(item.id, `local-${index + 1}`),
@@ -152,6 +154,9 @@ async function normalizeApplication(value: unknown, index: number, privateRoot: 
     employmentType: text(item.employmentType),
     status: text(item.status, "research"),
     fit,
+    jobSummary: savedJobSummary
+      ? normalizeJobSummary(savedJobSummary)
+      : summarizeJobPosting(latestSnapshot?.content ?? "", text(item.role), text(item.employer)),
     compensation: text(item.compensation),
     nextAction: text(item.nextAction, "Review this application"),
     nextActionDate: text(item.nextActionDate, ""),

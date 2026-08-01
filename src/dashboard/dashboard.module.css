@@ -479,7 +479,18 @@
 .detailTab:hover { color: white; }
 .detailTabActive { border-bottom-color: var(--signal); color: var(--signal); }
 .detailPanel { padding: 20px; }
-.detailMeta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.jobSummary {
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid rgb(185 255 74 / 38%);
+  border-left: 4px solid var(--signal);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgb(185 255 74 / 13%), rgb(185 255 74 / 4%));
+  box-shadow: 0 12px 30px rgb(0 0 0 / 16%);
+}
+.jobSummary h4 { margin: 0 0 8px; color: #cfff86; font-size: 12px; font-weight: 850; letter-spacing: .06em; line-height: 1.4; text-transform: uppercase; }
+.jobSummary p { margin: 0; color: #e3eadb; font-size: 16px; line-height: 1.65; }
+.detailMeta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 .detailMeta > div,
 .factList > div,
 .assessment > div {

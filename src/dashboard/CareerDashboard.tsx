@@ -597,7 +597,7 @@ function ApplicationsView({
           <input
             value={query}
             onChange={(event) => onQuery(event.target.value)}
-            placeholder="Company, role, location, or next action"
+            placeholder="Company, role, status, fit, date, or next action"
           />
         </label>
         <label className={styles.filterField}>
@@ -815,10 +815,16 @@ function ApplicationDetail({
 
       {activeTab === "summary" && (
         <section className={styles.detailPanel} role="tabpanel" id="detail-panel-summary" aria-labelledby="detail-tab-summary">
+          <section className={styles.jobSummary} aria-labelledby="job-summary-heading">
+            <h4 id="job-summary-heading">What the job actually is</h4>
+            <p>{application.jobSummary}</p>
+          </section>
+
           <div className={styles.detailMeta}>
             <DetailFact label="Status" value={statusLabels[application.status] ?? application.status} />
             <DetailFact label="Fit" value={fitLabels[application.fit]} />
             <DetailFact label="Compensation" value={application.compensation} />
+            <DetailFact label="Work setup" value={application.arrangement} />
           </div>
 
           <div className={styles.nextAction}>
@@ -839,7 +845,6 @@ function ApplicationDetail({
           <DetailSection title="Job details">
             <dl className={styles.factList}>
               <DetailFact label="Employment type" value={application.employmentType} />
-              <DetailFact label="Work arrangement" value={application.arrangement} />
               <DetailFact label="Location" value={application.location} />
               <DetailFact label="Added" value={formatTimestamp(application.createdAt)} />
               <DetailFact label="Last updated" value={formatTimestamp(application.updatedAt)} />

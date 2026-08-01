@@ -40,6 +40,7 @@ export type Application = {
   employmentType: string;
   status: string;
   fit: Fit;
+  jobSummary: string;
   compensation: string;
   nextAction: string;
   nextActionDate: string;

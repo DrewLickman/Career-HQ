@@ -66,6 +66,37 @@ class CareerHQWorkflowTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("must be a JSON object", result.stderr)
 
+    def test_add_job_stores_plain_language_job_summary(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.run_cli("init", "--workspace", folder)
+            posting = Path(folder) / "fictional-posting.txt"
+            posting.write_text(
+                "A complete fictional posting for a role that coordinates customer launches.",
+                encoding="utf-8",
+            )
+            summary = "This role coordinates customer launches. You would manage implementation plans and resolve handoff blockers."
+            added = json.loads(self.run_cli(
+                "add-job",
+                "--workspace", folder,
+                "--employer", "Fictional Harbor",
+                "--role", "Implementation Specialist",
+                "--location", "Remote",
+                "--arrangement", "Remote",
+                "--compensation", "Fictional range",
+                "--employment-type", "Full-time",
+                "--url", "https://jobs.example.test/fictional-harbor",
+                "--posting-file", str(posting),
+                "--fit", "strong-match",
+                "--job-summary", summary,
+                "--strongest-match", "Fictional implementation evidence",
+                "--largest-gap", "Fictional gap",
+                "--risk", "Fictional risk",
+                "--next-action", "Review the role",
+                "--current-confirmed",
+                "--credible-source",
+            ).stdout)
+            self.assertEqual(added["jobSummary"], summary)
+
     def test_submitted_requires_evidence(self):
         with tempfile.TemporaryDirectory() as folder:
             self.run_cli("init", "--workspace", folder)

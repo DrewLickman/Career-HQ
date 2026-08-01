@@ -29,7 +29,15 @@ function application(id, overrides = {}) {
     role: `${id} Role`,
     location: "Remote",
     nextAction: `Review ${id}`,
+    nextActionDate: "",
     status: "research",
+    fit: "reasonable-stretch",
+    postingSnapshots: [],
+    materials: [],
+    approval: null,
+    submissionEvidence: null,
+    createdAt: "",
+    updatedAt: "",
     ...overrides,
   };
 }
@@ -51,10 +59,15 @@ test("maps ledger statuses into readable pipeline stages", () => {
   assert.equal(applicationStage("interview"), "interview");
 });
 
-test("filters needs-action, search, active, and terminal views", () => {
+test("filters needs-action, searchable application tags, active, and terminal views", () => {
   const applications = [
-    application("alpha"),
-    application("beta", { employer: "Searchable Systems", status: "submission-unconfirmed" }),
+    application("alpha", {
+      fit: "reasonable-stretch",
+      nextActionDate: "",
+      createdAt: "2026-08-01T12:00:00Z",
+      postingSnapshots: [{ content: "Research customer needs and support internal users." }],
+    }),
+    application("beta", { employer: "Searchable Systems", status: "submission-unconfirmed", fit: "strong-match", nextActionDate: "2026-08-05" }),
     application("closed", { status: "closed" }),
   ];
   const actionIds = new Set(["beta"]);
@@ -62,6 +75,12 @@ test("filters needs-action, search, active, and terminal views", () => {
   assert.deepEqual(filterApplications(applications, "", "active", actionIds).map((item) => item.id), ["alpha", "beta"]);
   assert.deepEqual(filterApplications(applications, "", "needs-action", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "searchable", "active", actionIds).map((item) => item.id), ["beta"]);
+  assert.deepEqual(filterApplications(applications, "research", "active", actionIds).map((item) => item.id), ["alpha"]);
+  assert.deepEqual(filterApplications(applications, "reasonable stretch", "active", actionIds).map((item) => item.id), ["alpha"]);
+  assert.deepEqual(filterApplications(applications, "not scheduled", "active", actionIds).map((item) => item.id), ["alpha"]);
+  assert.deepEqual(filterApplications(applications, "customer needs", "active", actionIds).map((item) => item.id), ["alpha"]);
+  assert.deepEqual(filterApplications(applications, "August 1, 2026", "active", actionIds).map((item) => item.id), ["alpha"]);
+  assert.deepEqual(filterApplications(applications, "8/5", "active", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "", "terminal", actionIds).map((item) => item.id), ["closed"]);
 });
 

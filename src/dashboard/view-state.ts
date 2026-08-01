@@ -55,6 +55,65 @@ export function applicationStage(status: string): string {
   return status;
 }
 
+function searchLabel(value: string): string {
+  return value.replaceAll("-", " ");
+}
+
+function searchableDate(value: string | undefined): string[] {
+  const date = value?.trim() ?? "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (!match) return date ? [date] : [];
+
+  const [, year, month, day] = match;
+  const numericMonth = String(Number(month));
+  const numericDay = String(Number(day));
+  const displayDate = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${year}-${month}-${day}T00:00:00Z`));
+
+  return [date, `${numericMonth}/${numericDay}/${year}`, `${numericMonth}/${numericDay}`, displayDate];
+}
+
+function applicationSearchTerms(application: Application): string[] {
+  const dates = [
+    application.nextActionDate,
+    application.createdAt,
+    application.updatedAt,
+    application.approval?.authorizedAt ?? "",
+    application.submissionEvidence?.recordedAt ?? "",
+    ...application.postingSnapshots.flatMap((snapshot) => [snapshot.capturedAt, snapshot.currentConfirmedAt]),
+    ...application.materials.map((material) => material.generatedAt),
+  ].flatMap(searchableDate);
+  const savedPostingText = application.postingSnapshots.map((snapshot) => snapshot.content);
+  const status = application.status;
+  const stage = applicationStage(status);
+
+  return [
+    application.employer,
+    application.role,
+    application.location,
+    application.arrangement,
+    application.employmentType,
+    application.compensation,
+    application.nextAction,
+    application.strongestMatch,
+    application.largestGap,
+    application.risk,
+    status,
+    searchLabel(status),
+    stage,
+    searchLabel(stage),
+    application.fit,
+    searchLabel(application.fit),
+    application.nextActionDate ? "scheduled" : "not scheduled no scheduled date",
+    ...dates,
+    ...savedPostingText,
+  ];
+}
+
 export function filterApplications(
   applications: Application[],
   query: string,
@@ -63,12 +122,7 @@ export function filterApplications(
 ): Application[] {
   const needle = query.trim().toLowerCase();
   return applications.filter((application) => {
-    const haystack = [
-      application.employer,
-      application.role,
-      application.location,
-      application.nextAction,
-    ].join(" ").toLowerCase();
+    const haystack = applicationSearchTerms(application).join(" ").toLowerCase();
     const stage = applicationStage(application.status);
     const matchesFilter = filter === "active"
       ? stage !== "terminal"

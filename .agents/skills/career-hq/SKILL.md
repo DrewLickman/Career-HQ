@@ -98,7 +98,7 @@ Record answers with `answer`. Include a source and verification date. Use `--cor
 
 ## Jobs
 
-Read the full current posting from a credible source before adding it. Save the verbatim posting text to a temporary local file, then run `add-job`. Require current-listing and credible-source confirmation. Show fit, strongest match, largest gap, major risk, compensation, location/work arrangement, and one next action. Missing preferred qualifications alone do not disqualify a role.
+Read the full current posting from a credible source before adding it. Save the verbatim posting text to a temporary local file, then run `add-job`. Require current-listing and credible-source confirmation. Write `--job-summary` as a source-grounded, plain-language summary of 2–3 short sentences that leads with what the role actually is and what the person would do day to day. Show that summary first, then fit, strongest match, largest gap, major risk, compensation, location/work arrangement, and one next action. Missing preferred qualifications alone do not disqualify a role.
 
 Use only these fit labels: `strong-match`, `reasonable-stretch`, `low-probability-stretch`, and `not-recommended`.
 

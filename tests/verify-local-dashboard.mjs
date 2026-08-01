@@ -41,6 +41,10 @@ assert.match(applications.visibleHtml, /Confirmation Test Systems/);
 assert.match(applications.visibleHtml, /Summary/);
 assert.match(applications.visibleHtml, /Application/);
 assert.match(applications.visibleHtml, /Posting/);
+assert.match(applications.visibleHtml, /What the job actually is/);
+assert.doesNotMatch(applications.visibleHtml, /What you would do/);
+assert.match(applications.visibleHtml, /Work setup/);
+assert.match(applications.visibleHtml, /Full saved posting for the fictional Local Test Systems role/);
 assert.match(applications.visibleHtml, /Next action[\s\S]*Continue in Codex/);
 assert.doesNotMatch(applications.visibleHtml, /Closed Test Works|Archived Specialist|version 1/);
 
