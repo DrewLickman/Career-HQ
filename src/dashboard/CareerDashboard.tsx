@@ -891,6 +891,11 @@ function ApplicationDetail({
         <section className={styles.jobSummary} aria-labelledby="job-summary-heading">
           <h4 id="job-summary-heading">What the job actually is</h4>
           <p>{application.jobSummary}</p>
+          {application.jobSummaryBullets.length > 0 && (
+            <ul>
+              {application.jobSummaryBullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+            </ul>
+          )}
         </section>
       </div>
 

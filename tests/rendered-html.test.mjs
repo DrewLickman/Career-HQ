@@ -37,6 +37,7 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
       location: "Remote", arrangement: "Remote", employmentType: "Full-time",
       status: "research", fit: "strong-match", url: "https://jobs.example.test/local-test",
       compensation: "Test range", nextAction: "Review local test posting", nextActionDate: "2026-07-23",
+      jobSummary: "Coordinate fictional customer launches and document implementation blockers.\n- Coordinate fictional customer launches and document implementation blockers.\n- Lead weekly readiness reviews with fictional partner teams.",
       strongestMatch: "Verified test evidence", largestGap: "Test gap", risk: "Test risk", updatedAt: "2026-07-22",
       postingSnapshots: [{
         path: "postings/local-test-posting.txt",
@@ -192,6 +193,8 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(component, /Original source/);
   assert.match(component, /Full saved posting/);
   assert.match(component, /What the job actually is/);
+  assert.match(component, /application\.jobSummaryBullets\.length/);
+  assert.match(component, /application\.jobSummaryBullets\.map/);
   assert.doesNotMatch(component, /What you would do/);
   assert.match(component, /<h3>\{application\.role\}<\/h3>\s*<p>\{application\.employer\}<\/p>/);
   assert.match(component, /DetailFact label="Work setup" value=\{application\.arrangement\}/);
@@ -219,6 +222,7 @@ test("dashboard source includes accessible hybrid navigation and readable typogr
   assert.match(css, /\.detailOverview/);
   assert.match(css, /\.detailOverviewMain/);
   assert.match(css, /\.jobSummary/);
+  assert.match(css, /\.jobSummary ul/);
   assert.match(css, /\.detail \{[\s\S]*?position: static;/);
   assert.match(css, /\.detailMeta \{ display: grid; grid-template-columns: repeat\(2, 1fr\)/);
   assert.match(css, /\.copyToast/);

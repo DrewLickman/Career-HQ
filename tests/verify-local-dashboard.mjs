@@ -43,9 +43,11 @@ assert.match(applications.visibleHtml, /Summary/);
 assert.match(applications.visibleHtml, /Application/);
 assert.match(applications.visibleHtml, /Posting/);
 assert.match(applications.visibleHtml, /What the job actually is/);
+assert.match(applications.visibleHtml, /Coordinate fictional customer launches and document implementation blockers/);
+assert.match(applications.visibleHtml, /Lead weekly readiness reviews with fictional partner teams/);
+assert.equal((applications.visibleHtml.match(/Coordinate fictional customer launches and document implementation blockers/g) ?? []).length, 1);
 assert.doesNotMatch(applications.visibleHtml, /What you would do/);
 assert.match(applications.visibleHtml, /Work setup/);
-assert.match(applications.visibleHtml, /Full saved posting for the fictional Local Test Systems role/);
 assert.match(applications.visibleHtml, /Next action[\s\S]*Continue in Codex/);
 assert.doesNotMatch(applications.visibleHtml, /Closed Test Works|Archived Specialist|version 1/);
 

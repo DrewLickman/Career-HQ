@@ -41,6 +41,7 @@ export type Application = {
   status: string;
   fit: Fit;
   jobSummary: string;
+  jobSummaryBullets: string[];
   compensation: string;
   nextAction: string;
   nextActionDate: string;

@@ -15,7 +15,7 @@
           "id": { "type": "string", "minLength": 1 },
           "status": { "enum": ["research", "ready", "assessment", "interview", "offer", "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted"] },
           "fit": { "enum": ["strong-match", "reasonable-stretch", "low-probability-stretch", "not-recommended"] },
-          "jobSummary": { "type": "string", "minLength": 1, "description": "A short source-grounded explanation of what the job is and what the person would do." },
+          "jobSummary": { "type": "string", "minLength": 1, "description": "A source-grounded 1-3 sentence explanation of what the job is and what the person would do, optionally followed by nonredundant Markdown responsibility bullets." },
           "postingSnapshots": { "type": "array" },
           "materials": { "type": "array" }
         },
