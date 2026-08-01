@@ -35,6 +35,7 @@ const applications = await page("/?view=applications");
 assert.match(applications.visibleHtml, /Every opportunity, organized/);
 assert.match(applications.visibleHtml, /Application tracker/);
 assert.match(applications.visibleHtml, /Active applications/);
+assert.match(applications.visibleHtml, /Submitted/);
 assert.match(applications.visibleHtml, /Local Test Systems/);
 assert.match(applications.visibleHtml, /Automation Specialist/);
 assert.match(applications.visibleHtml, /Confirmation Test Systems/);

@@ -48,6 +48,8 @@ test("normalizes dashboard URLs and falls back safely", () => {
   assert.equal(normalizeDashboardView(["insights", "overview"]), "insights");
   assert.equal(normalizeDashboardView("unknown"), "overview");
   assert.equal(normalizeApplicationFilter("needs-action"), "needs-action");
+  assert.equal(normalizeApplicationFilter("submitted"), "submitted");
+  assert.equal(normalizeApplicationFilter("applied"), "active");
   assert.equal(normalizeApplicationFilter("unknown"), "active");
   assert.equal(dashboardHref("overview"), "/?view=overview");
   assert.equal(dashboardHref("preferences"), "/?view=preferences");
@@ -56,7 +58,8 @@ test("normalizes dashboard URLs and falls back safely", () => {
 
 test("maps ledger statuses into readable pipeline stages", () => {
   assert.equal(applicationStage("submission-unconfirmed"), "attention");
-  assert.equal(applicationStage("submitted"), "applied");
+  assert.equal(applicationStage("applied"), "submitted");
+  assert.equal(applicationStage("submitted"), "submitted");
   assert.equal(applicationStage("withdrawn"), "terminal");
   assert.equal(applicationStage("interview"), "interview");
 });
@@ -70,11 +73,12 @@ test("filters needs-action, searchable application tags, active, and terminal vi
       postingSnapshots: [{ content: "Research customer needs and support internal users." }],
     }),
     application("beta", { employer: "Searchable Systems", status: "submission-unconfirmed", fit: "strong-match", nextActionDate: "2026-08-05" }),
+    application("submitted", { status: "submitted", fit: "strong-match", nextActionDate: "2026-08-08" }),
     application("closed", { status: "closed" }),
   ];
   const actionIds = new Set(["beta"]);
 
-  assert.deepEqual(filterApplications(applications, "", "active", actionIds).map((item) => item.id), ["alpha", "beta"]);
+  assert.deepEqual(filterApplications(applications, "", "active", actionIds).map((item) => item.id), ["alpha", "beta", "submitted"]);
   assert.deepEqual(filterApplications(applications, "", "needs-action", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "searchable", "active", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "research", "active", actionIds).map((item) => item.id), ["alpha"]);
@@ -83,6 +87,7 @@ test("filters needs-action, searchable application tags, active, and terminal vi
   assert.deepEqual(filterApplications(applications, "customer needs", "active", actionIds).map((item) => item.id), ["alpha"]);
   assert.deepEqual(filterApplications(applications, "August 1, 2026", "active", actionIds).map((item) => item.id), ["alpha"]);
   assert.deepEqual(filterApplications(applications, "8/5", "active", actionIds).map((item) => item.id), ["beta"]);
+  assert.deepEqual(filterApplications(applications, "", "submitted", actionIds).map((item) => item.id), ["submitted"]);
   assert.deepEqual(filterApplications(applications, "", "terminal", actionIds).map((item) => item.id), ["closed"]);
 });
 

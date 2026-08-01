@@ -38,7 +38,7 @@ const applications = [
     company: "Brightline Labs",
     role: "AI Operations Associate",
     location: "Hybrid",
-    status: "Applied",
+    status: "Submitted",
     fit: "Strong match",
     fitClass: "strong",
     action: "Follow up on application",
@@ -77,7 +77,7 @@ const applications = [
   },
 ] as const;
 
-const filters = ["Active", "Research", "Ready", "Applied", "Interview", "Closed"] as const;
+const filters = ["Active", "Research", "Ready", "Submitted", "Interview", "Closed"] as const;
 
 const setupSteps = [
   {

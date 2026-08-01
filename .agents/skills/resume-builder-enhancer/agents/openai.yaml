@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resume Builder & Enhancer"
+  short_description: "Build and strengthen truthful resumes"
+  default_prompt: "Use $resume-builder-enhancer to compare my resume with a job posting and improve it using only verified truthful information."

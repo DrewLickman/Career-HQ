@@ -23,7 +23,7 @@ FIT_LABELS = {
     "not-recommended",
 }
 STATUSES = {
-    "research", "ready", "applied", "assessment", "interview", "offer",
+    "research", "ready", "assessment", "interview", "offer",
     "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted",
 }
 TERMINAL = {"rejected", "withdrawn", "closed"}

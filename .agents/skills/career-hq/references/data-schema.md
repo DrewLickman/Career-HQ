@@ -20,7 +20,7 @@ user has authorized.
 
 ## Applications
 
-Statuses: `research`, `ready`, `applied`, `assessment`, `interview`, `offer`, `rejected`, `withdrawn`, `closed`, `submission-unconfirmed`, and `submitted`.
+Statuses: `research`, `ready`, `assessment`, `interview`, `offer`, `rejected`, `withdrawn`, `closed`, `submission-unconfirmed`, and `submitted`.
 
 Each application keeps a short source-grounded `jobSummary` explaining what the role is and what the person would do, plus posting snapshot path/hash, structured posting facts, fit assessment, next action/date, exact material versions and hashes, important answers, unresolved questions, review packet, approval evidence, and submission confirmation evidence.
 

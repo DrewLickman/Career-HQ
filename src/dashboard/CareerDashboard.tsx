@@ -24,7 +24,7 @@ const stages = [
   ["research", "Research"],
   ["ready", "Ready"],
   ["attention", "Attention"],
-  ["applied", "Applied"],
+  ["submitted", "Submitted"],
   ["assessment", "Assessment"],
   ["interview", "Interview"],
   ["offer", "Offer"],
@@ -51,7 +51,7 @@ const fitLabels: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   research: "Research",
   ready: "Ready for review",
-  applied: "Applied",
+  applied: "Submitted",
   submitted: "Submitted",
   "submission-unconfirmed": "Needs confirmation",
   assessment: "Assessment",
@@ -68,7 +68,7 @@ const filterLabels: Record<ApplicationFilter, string> = {
   research: "Research",
   ready: "Ready for review",
   attention: "Needs confirmation",
-  applied: "Applied",
+  submitted: "Submitted",
   assessment: "Assessment",
   interview: "Interview",
   offer: "Offer",
@@ -225,7 +225,7 @@ export function CareerDashboard({
   const nextDatedTask = actionTasks.find((task) => task.dueDate);
   const sent = dashboard.applications.filter((application) =>
     Boolean(application.submissionEvidence)
-    || ["applied", "assessment", "interview", "offer", "submitted"].includes(application.status)
+    || ["assessment", "interview", "offer", "submitted"].includes(application.status)
   ).length;
   const fitCounts = {
     strong: activeApplications.filter((application) => application.fit === "strong-match").length,

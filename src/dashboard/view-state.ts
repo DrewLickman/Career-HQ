@@ -9,7 +9,7 @@ export const applicationFilters = [
   "research",
   "ready",
   "attention",
-  "applied",
+  "submitted",
   "assessment",
   "interview",
   "offer",
@@ -50,7 +50,8 @@ export function dashboardHref(
 
 export function applicationStage(status: string): string {
   if (terminalStatuses.has(status)) return "terminal";
-  if (status === "submitted") return "applied";
+  // Keep an old private ledger readable until its status is migrated.
+  if (status === "applied") return "submitted";
   if (status === "submission-unconfirmed") return "attention";
   return status;
 }

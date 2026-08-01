@@ -13,7 +13,7 @@
         "required": ["id", "employer", "role", "status", "fit", "postingSnapshots", "nextAction"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
-          "status": { "enum": ["research", "ready", "applied", "assessment", "interview", "offer", "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted"] },
+          "status": { "enum": ["research", "ready", "assessment", "interview", "offer", "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted"] },
           "fit": { "enum": ["strong-match", "reasonable-stretch", "low-probability-stretch", "not-recommended"] },
           "jobSummary": { "type": "string", "minLength": 1, "description": "A short source-grounded explanation of what the job is and what the person would do." },
           "postingSnapshots": { "type": "array" },
