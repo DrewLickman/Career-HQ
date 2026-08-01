@@ -59,6 +59,7 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
         {
           version: 2,
           generatedAt: "2026-07-22T12:00:00Z",
+          visualVerification: { status: "required", verifiedAt: null, notes: null },
           files: [
             {
               kind: "pdf",
@@ -73,6 +74,18 @@ test("local dashboard reads an ignored workspace at request time", { skip: proce
           ],
         },
       ],
+    }, {
+      id: "local-test-unconfirmed", employer: "Confirmation Test Systems", role: "Support Engineer",
+      location: "Remote", arrangement: "Remote", employmentType: "Full-time",
+      status: "submission-unconfirmed", fit: "reasonable-stretch", url: "https://jobs.example.test/confirmation-test",
+      compensation: "Test range", nextAction: "Find fictional confirmation evidence", nextActionDate: "2026-07-23",
+      strongestMatch: "Verified fictional support evidence", largestGap: "Fictional product gap", risk: "Submission state is unconfirmed", updatedAt: "2026-07-22",
+      postingSnapshots: [],
+      importantAnswers: [],
+      unresolvedQuestions: [],
+      materials: [],
+      approval: { authorizedAt: "2026-07-22T11:00:00Z", confirmation: "Recorded fictional authorization" },
+      submissionEvidence: null,
     }, {
       id: "local-test-closed", employer: "Closed Test Works", role: "Archived Specialist",
       location: "Remote", arrangement: "Remote", employmentType: "Full-time",
@@ -115,6 +128,8 @@ test("dashboard source uses private local JSON instead of sample data", () => {
   const gitignore = readFileSync(join(REPO, ".gitignore"), "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
   assert.match(page, /loadLocalDashboard/);
+  assert.match(page, /normalizeDashboardView/);
+  assert.match(page, /normalizeApplicationFilter/);
   assert.doesNotMatch(page, /sample-data/);
   assert.match(loader, /\.job-search/);
   assert.match(loader, /applicant-profile\.json/);
@@ -143,7 +158,7 @@ test("README clearly separates the public guide from the private local dashboard
   assert.match(stopScript, /Stop-Process/);
 });
 
-test("dashboard source includes accessible interaction and responsive cards", () => {
+test("dashboard source includes accessible hybrid navigation and readable typography", () => {
   const layout = readFileSync(join(REPO, "src", "app", "layout.tsx"), "utf8");
   const component = readFileSync(join(REPO, "src", "dashboard", "CareerDashboard.tsx"), "utf8");
   const css = readFileSync(join(REPO, "src", "dashboard", "dashboard.module.css"), "utf8");
@@ -152,16 +167,48 @@ test("dashboard source includes accessible interaction and responsive cards", ()
   assert.match(component, /aria-pressed/);
   assert.match(component, /aria-live="polite"/);
   assert.match(component, /aria-current/);
-  assert.match(component, /getBoundingClientRect/);
+  assert.match(component, /role="tablist"/);
+  assert.match(component, /role="tab"/);
+  assert.match(component, /role="tabpanel"/);
+  assert.match(component, /aria-selected/);
+  assert.match(component, /Overview/);
+  assert.match(component, /Applications/);
+  assert.match(component, /Insights/);
+  assert.match(component, /window\.history\.pushState/);
+  assert.match(component, /window\.history\.replaceState/);
+  assert.match(component, /popstate/);
+  assert.match(component, /needs-action/);
+  assert.match(component, /overviewActionTasks/);
+  assert.match(component, /View all \{tasks\.length\} actions/);
   assert.match(component, /Original source/);
   assert.match(component, /Full saved posting/);
   assert.match(component, /Search applications/);
-  assert.match(component, /Filter by pipeline status/);
+  assert.match(component, /Filter by status/);
   assert.match(component, /Active applications/);
-  assert.match(component, /closed hidden/);
   assert.match(component, />CHQ</);
   assert.match(component, /Latest resume/);
+  assert.match(component, /Continue in Codex/);
+  assert.match(component, /ApplicationDetail[\s\S]*task=/);
+  assert.match(component, /setInterval\(refreshWhenVisible, 15_000\)/);
+  assert.match(component, /visibilitychange/);
+  assert.match(component, /navigator\.clipboard\.writeText/);
+  assert.match(component, /Copied\. Paste the prompt into Codex\./);
+  assert.match(component, /role="status"/);
+  assert.match(component, /setTimeout\(\(\) => setCopyMessage\(""\), 4_000\)/);
+  assert.doesNotMatch(component, /Priority queue/);
+  assert.match(css, /\.priorityList/);
+  assert.match(css, /\.detailTabs/);
+  assert.match(css, /\.copyToast/);
+  assert.match(css, /\.workspacePill/);
   assert.doesNotMatch(component, /Local by design|Local files only|Private local workspace|reads private local files/);
   assert.match(css, /@media \(max-width: 720px\)/);
+  assert.match(globals, /color-scheme:\s*dark/);
   assert.match(globals, /:focus-visible/);
+
+  const fontDeclarations = css.match(/font-size:\s*[^;]+;/g) ?? [];
+  assert.ok(fontDeclarations.length > 0, "dashboard CSS should define an explicit readable type scale");
+  for (const declaration of fontDeclarations) {
+    const pixelSizes = [...declaration.matchAll(/([0-9.]+)px/g)].map((match) => Number(match[1]));
+    assert.ok(pixelSizes.every((size) => size >= 12), `visible dashboard text must be at least 12px: ${declaration}`);
+  }
 });

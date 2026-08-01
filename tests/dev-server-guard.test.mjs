@@ -120,6 +120,24 @@ test("guard enforces the runtime limit and cleans the tree", { skip: process.pla
   assert.equal(summary.treeStopped, true);
 });
 
+test("guard allows an unlimited runtime when no limit is requested", { skip: process.platform !== "win32" }, () => {
+  const result = runGuard([
+    "-Command",
+    FIXTURE_COMMAND,
+    "-HoldAfterReadySeconds",
+    "1",
+    "-MaxRuntimeSeconds",
+    "0",
+    "-MemoryLimitMB",
+    "256",
+  ]);
+  const summary = summaryFrom(result);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(summary.terminationReason, "completed");
+  assert.equal(summary.treeStopped, true);
+});
+
 test("guard reports a simulated memory-limit breach and cleans the tree", { skip: process.platform !== "win32" }, () => {
   const result = runGuard([
     "-Command",

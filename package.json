@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "python scripts/privacy_scan.py . --release",
     "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-bounded-dev-server.ps1",
-    "dev:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-bounded-dev-server.ps1 -HoldAfterReadySeconds 0",
+    "dev:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run-bounded-dev-server.ps1 -HoldAfterReadySeconds 0 -MaxRuntimeSeconds 120",
     "build": "next build",
     "postbuild": "python scripts/privacy_scan.py . --release",
     "start": "next start -H 127.0.0.1",

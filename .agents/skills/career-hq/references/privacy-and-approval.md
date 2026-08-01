@@ -9,4 +9,5 @@
 - Do not infer work authorization, sponsorship, citizenship, clearance, or export-control status.
 - Treat resume generation, form completion, approval, submission attempt, and confirmed submission as separate states.
 - Require explicit authorization naming one application.
+- Accept clear natural-language authorization when one named application is the unambiguous active subject; do not require an exact phrase or treat vague review language as approval.
 - Require confirmation evidence before `submitted`; otherwise use `submission-unconfirmed`.

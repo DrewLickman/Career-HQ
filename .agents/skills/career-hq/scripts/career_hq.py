@@ -799,18 +799,33 @@ def cmd_review(args: argparse.Namespace) -> None:
         "packet": str(packet_path),
         "review": packet,
         "displayName": f"{application['employer']} \u2014 {application['role']}",
-        "requiredApproval": confirmation,
+        "suggestedApproval": confirmation,
+        "approvalGuidance": "Exact wording is not required; clear application-specific submission authorization is required.",
     }, indent=2))
 
 
 def cmd_approve(args: argparse.Namespace) -> None:
     paths = paths_for(args.workspace); ledger = load_json(paths["applications"]); application = find_application(ledger, args.application_id)
     expected = f"I authorize submission to {application['employer']} for {application['role']}"
-    if args.confirmation != expected:
-        raise SystemExit(f"Exact application-specific confirmation required: {expected}")
+    confirmation = re.sub(r"[*_`]", "", str(args.confirmation)).strip()
+    normalized = re.sub(r"\s+", " ", confirmation).lower()
+    approval_signal = re.search(r"\b(authorize|authorized|approve|approved|authorization|approval)\b", normalized)
+    submission_signal = re.search(r"\b(submit|submission|apply|application)\b", normalized)
+    imperative_signal = re.search(
+        r"\b(go ahead(?: and)? submit|please submit|submit (?:it|this|the application|my application))\b",
+        normalized,
+    )
+    negated = re.search(r"\b(no|not|don['’]?t|do not|cannot|can['’]?t|won['’]?t)\b", normalized)
+    question_only = normalized.endswith("?") or re.match(r"^(can|could|would|will)\b", normalized)
+    exposes_internal_id = str(application["id"]).lower() in normalized
+    if negated or question_only or exposes_internal_id or not ((approval_signal and submission_signal) or imperative_signal):
+        raise SystemExit(
+            "Clear application-specific submission authorization is required. "
+            f"Examples: authorized for submission; {expected}"
+        )
     if not application.get("reviewPacket") or application.get("unresolvedQuestions"):
         raise SystemExit("A complete review packet with no unresolved questions is required.")
-    application["approval"] = {"confirmation": args.confirmation, "authorizedAt": now_iso(), "scope": application["id"]}
+    application["approval"] = {"confirmation": confirmation, "authorizedAt": now_iso(), "scope": application["id"]}
     application["nextAction"] = "User may submit this specific application; capture confirmation evidence afterward."
     save_json(paths["applications"], ledger); print(json.dumps(application["approval"], indent=2))
 

@@ -59,7 +59,7 @@ python -m pip install -r requirements.txt
 
 Then double-click **START CAREER HQ.bat** at the top level of the project folder. It starts the guarded local server and opens the private dashboard automatically at [http://127.0.0.1:3000](http://127.0.0.1:3000). Double-click **STOP CAREER HQ.bat** when you want to close the server early.
 
-This address is separate from the public setup guide and works only on the computer running Career HQ. The guarded development server stops after 10 minutes and enforces a 2 GB process-tree memory ceiling. Developers can still use `npm run dev`; use `npm run dev:check` for a finite startup check.
+This address is separate from the public setup guide and works only on the computer running Career HQ. The guarded development server stays running until you close it and enforces a 2 GB process-tree memory ceiling. Developers can still use `npm run dev`; use `npm run dev:check` for a finite startup check.
 
 The dashboard shows a setup instruction until Codex initializes `.job-search/`. After that, refresh the page whenever Codex updates the local ledger; no export or sync command is required.
 

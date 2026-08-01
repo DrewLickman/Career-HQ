@@ -1,22 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #17201b;
-  --muted: #69736c;
-  --paper: #f3f0e8;
-  --card: #fffdf8;
-  --line: #ddd9ce;
-  --nav: #142019;
-  --nav-soft: #223128;
-  --signal: #b8f23d;
-  --signal-dark: #466508;
+  color-scheme: dark;
+  --ink: #f4f7f2;
+  --muted: #8d98a5;
+  --paper: #07090d;
+  --card: #10151d;
+  --card-raised: #151b24;
+  --line: rgb(255 255 255 / 9%);
+  --line-strong: rgb(255 255 255 / 15%);
+  --nav: #090c12;
+  --nav-soft: #171d27;
+  --signal: #b9ff4a;
+  --signal-soft: rgb(185 255 74 / 12%);
+  --signal-dark: #b9ff4a;
+  --cyan: #65ddff;
+  --warning: #f5c963;
+  --danger: #ff8174;
 }
 
 * { box-sizing: border-box; }
-html { background: var(--nav); }
-body { margin: 0; background: var(--paper); color: var(--ink); font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 16px; line-height: 1.5; }
-button, input, select { font: inherit; }
-button, a, input, select { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 3px solid #5c8b00; outline-offset: 3px; }
-::selection { background: var(--signal); color: var(--ink); }
+html { background: var(--paper); scroll-behavior: smooth; }
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    radial-gradient(circle at 75% -10%, rgb(75 123 83 / 15%), transparent 34rem),
+    radial-gradient(circle at 100% 30%, rgb(59 117 151 / 8%), transparent 30rem),
+    var(--paper);
+  color: var(--ink);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+::selection { background: var(--signal); color: #11170a; }
+* { scrollbar-color: #39414d #0b0f15; scrollbar-width: thin; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

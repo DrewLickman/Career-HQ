@@ -44,7 +44,7 @@ If a local server is required, every agent must:
 
 1. Launch it through `scripts/run-bounded-dev-server.ps1` (or `npm run dev`).
 2. Record the guarded launch and reuse that server for the current verification pass.
-3. Keep the default 10-minute runtime and 2 GB process-tree memory ceilings unless using stricter values.
+3. Keep the 2 GB process-tree memory ceiling. The dashboard runtime is intentionally unlimited unless a finite limit is explicitly supplied for a check.
 4. Stop the wrapper before final handoff unless the user explicitly asked for a bounded server to remain running.
 5. Confirm the wrapper reports `treeStopped: true`, then audit that no Career HQ Next.js, Vinext, Vite, Wrangler, npm, or Node server process remains.
 

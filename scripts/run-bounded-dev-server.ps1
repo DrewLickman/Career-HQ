@@ -7,14 +7,14 @@ param(
     [string]$HealthUrl = 'http://127.0.0.1:3000/',
     [ValidateRange(1, 3600)]
     [int]$ReadyTimeoutSeconds = 90,
-    [ValidateRange(1, 3600)]
-    [int]$MaxRuntimeSeconds = 600,
+    [ValidateRange(0, 3600)]
+    [int]$MaxRuntimeSeconds = 0,
     [ValidateRange(16, 32768)]
     [int]$MemoryLimitMB = 2048,
     [ValidateRange(50, 5000)]
     [int]$PollIntervalMs = 500,
-    [ValidateRange(0, 3600)]
-    [int]$HoldAfterReadySeconds = 600,
+    [ValidateRange(-1, 3600)]
+    [int]$HoldAfterReadySeconds = -1,
     [AllowEmptyString()]
     [string]$VerificationCommand = '',
     [ValidateRange(1, 3600)]
@@ -427,7 +427,7 @@ try {
             $terminationReason = 'memory-limit'
             throw "The guarded process tree reached the $MemoryLimitMB MB private-memory limit."
         }
-        if ($elapsedSeconds -ge $MaxRuntimeSeconds) {
+        if ($MaxRuntimeSeconds -gt 0 -and $elapsedSeconds -ge $MaxRuntimeSeconds) {
             $terminationReason = 'runtime-limit'
             throw "The guarded process tree reached the $MaxRuntimeSeconds second runtime limit."
         }
@@ -478,7 +478,7 @@ try {
                     throw "The verification command reached the $VerificationTimeoutSeconds second timeout."
                 }
             }
-            elseif (($elapsedSeconds - $readyAtSeconds) -ge $HoldAfterReadySeconds) {
+            elseif ($HoldAfterReadySeconds -ge 0 -and ($elapsedSeconds - $readyAtSeconds) -ge $HoldAfterReadySeconds) {
                 $terminationReason = 'completed'
                 $wrapperExitStatus = 0
                 break

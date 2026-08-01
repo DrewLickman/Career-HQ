@@ -48,7 +48,7 @@ When the user wants the dashboard, handle its setup yourself when tools are avai
 
 1. Check whether port 3000 belongs to the current Career HQ workspace.
 2. If a restart is needed, stop only the exact Career HQ bounded wrapper or its owned process tree. Never stop unrelated Node or npm processes.
-3. Start the dashboard through `npm run dev` or `scripts/run-bounded-dev-server.ps1`. Keep the standard 10-minute runtime and 2 GB process-tree memory limits.
+3. Start the dashboard through `npm run dev` or `scripts/run-bounded-dev-server.ps1`. Keep the 2 GB process-tree memory limit; the dashboard runtime is unlimited unless a finite limit is explicitly supplied for a check.
 4. Wait for `http://127.0.0.1:3000/` to respond successfully.
 5. Open [Career HQ](http://127.0.0.1:3000) with the available browser or Windows app-control surface.
 6. Ask the user to confirm what they see, then prompt the next useful action.
@@ -122,9 +122,9 @@ When materials are ready, give the user a direct link to each local file and ask
 
 ## Review, approval, and tracking
 
-Creating materials never authorizes submission. Run `review` and present its packet before requesting application-specific authorization. Record approval only with the exact confirmation required by `approve`.
+Creating materials never authorizes submission. Run `review` and present its packet before requesting application-specific authorization. Record approval only when the user clearly authorizes submission for the one active, named application. Do not require memorized or verbatim wording.
 
-Present approvals in human terms. Show the employer, job title, and a direct link to the exact resume being approved. Ask for the confirmation returned by `review`, formatted as **I authorize submission to Employer for Job Title**. Pass the internal application ID to commands silently in the background, but never expose it or require the user to find it. If multiple applications are ready, handle them one at a time by employer and job title.
+Present approvals in human terms. Show the employer, job title, and a direct link to the exact resume being approved. Accept clear natural-language approval such as **authorized for submission**, **approved to submit**, **go ahead and submit**, or **I authorize submission to Employer for Job Title** when exactly one application is the active subject. Pass the user's actual wording to `approve`; never rewrite vague wording into approval. Replies such as **reviewed**, **looks good**, or **yes** do not authorize submission unless they clearly refer to submitting. If the wording or active application is ambiguous, ask one short confirmation naming the employer and role. Pass the internal application ID to commands silently in the background, but never expose it or require the user to find it. If multiple applications are ready, handle them one at a time by employer and job title.
 
 Whenever an application reaches an acknowledgment, agreement, disclosure, certification, consent, arbitration, background-check, or terms page, pause before selecting anything and immediately summarize the page in chat. Use the document's real title and explain:
 

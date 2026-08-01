@@ -4,29 +4,68 @@ import { join } from "node:path";
 
 const url = process.argv[2];
 assert.ok(url, "dashboard URL is required");
-const response = await fetch(url, { headers: { accept: "text/html" } });
-assert.equal(response.status, 200);
-assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
-const html = await response.text();
-const visibleHtml = html
-  .replace(/<script\b[\s\S]*?<\/script>/gi, "")
-  .replace(/<!--.*?-->/g, "");
-assert.match(html, /Career HQ \| Local job search command center/i);
-assert.match(html, /Local Test Candidate/);
-assert.match(html, /Local Test Systems/);
-assert.match(html, /Original source/);
-assert.match(html, /https:\/\/jobs\.example\.test\/local-test/);
-assert.match(html, /Full saved posting for the fictional Local Test Systems role/);
-assert.match(visibleHtml, /Latest resume[^<]*version 2/);
-assert.match(visibleHtml, /View Local Test Systems[^<]*Automation Specialist[^<]*resume \(PDF\)/);
-assert.match(visibleHtml, /Download Local Test Systems[^<]*Automation Specialist[^<]*resume \(Word\)/);
-assert.match(visibleHtml, /Active applications/);
-assert.match(visibleHtml, /1 closed hidden/);
-assert.match(visibleHtml, />CHQ</);
-assert.doesNotMatch(visibleHtml, /Closed Test Works|Archived Specialist|version 1/);
-assert.doesNotMatch(html, /local-test-001-resume-v00[12]|materials\/local-test/);
-assert.doesNotMatch(html, /Local by design|Local files only|Private local workspace|reads private local files/);
-assert.doesNotMatch(html, /Fictional data only|Avery Rowan/);
+
+function visible(html) {
+  return html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/<!--.*?-->/g, "");
+}
+
+async function page(path) {
+  const response = await fetch(new URL(path, url), { headers: { accept: "text/html" } });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+  const html = await response.text();
+  return { html, visibleHtml: visible(html) };
+}
+
+const overview = await page("/?view=overview");
+assert.match(overview.html, /Career HQ \| Local job search command center/i);
+assert.match(overview.visibleHtml, /Your next move, clearly/);
+assert.match(overview.visibleHtml, /Focus here first/);
+assert.match(overview.visibleHtml, /View all 2 actions/);
+assert.match(overview.visibleHtml, /Where opportunities stand/);
+assert.match(overview.visibleHtml, /Verify whether submission completed/);
+assert.match(overview.visibleHtml, /Visually verify the latest resume/);
+assert.match(overview.visibleHtml, /Confirmation Test Systems[^<]*Support Engineer/);
+assert.ok((overview.visibleHtml.match(/Continue in Codex/g) ?? []).length >= 2, "Overview should expose the prioritized Codex actions");
+assert.doesNotMatch(overview.visibleHtml, /Application tracker|Full saved posting|Application answers/);
+
+const applications = await page("/?view=applications");
+assert.match(applications.visibleHtml, /Every opportunity, organized/);
+assert.match(applications.visibleHtml, /Application tracker/);
+assert.match(applications.visibleHtml, /Active applications/);
+assert.match(applications.visibleHtml, /Local Test Systems/);
+assert.match(applications.visibleHtml, /Automation Specialist/);
+assert.match(applications.visibleHtml, /Confirmation Test Systems/);
+assert.match(applications.visibleHtml, /Summary/);
+assert.match(applications.visibleHtml, /Application/);
+assert.match(applications.visibleHtml, /Posting/);
+assert.match(applications.visibleHtml, /Next action[\s\S]*Continue in Codex/);
+assert.doesNotMatch(applications.visibleHtml, /Closed Test Works|Archived Specialist|version 1/);
+
+const needsAction = await page("/?view=applications&filter=needs-action");
+assert.match(needsAction.visibleHtml, /Needs action/);
+assert.match(needsAction.visibleHtml, /Local Test Systems/);
+assert.match(needsAction.visibleHtml, /Confirmation Test Systems/);
+assert.doesNotMatch(needsAction.visibleHtml, /Closed Test Works/);
+
+const insights = await page("/?view=insights");
+assert.match(insights.visibleHtml, /Patterns worth noticing/);
+assert.match(insights.visibleHtml, /A quieter view of the bigger picture/);
+assert.match(insights.visibleHtml, /Strongest role lane/);
+assert.match(insights.visibleHtml, /Action load/);
+
+const invalidView = await page("/?view=not-a-dashboard-view");
+assert.match(invalidView.visibleHtml, /Your next move, clearly/);
+assert.doesNotMatch(invalidView.visibleHtml, /Application tracker/);
+
+for (const rendered of [overview, applications, needsAction, insights, invalidView]) {
+  assert.match(rendered.visibleHtml, />CHQ</);
+  assert.doesNotMatch(rendered.html, /local-test-001-resume-v00[12]|materials\/local-test/);
+  assert.doesNotMatch(rendered.html, /Local by design|Local files only|Private local workspace|reads private local files/);
+  assert.doesNotMatch(rendered.html, /Fictional data only|Avery Rowan/);
+}
 
 const materialUrl = new URL("/api/material", url);
 materialUrl.searchParams.set("employer", "Local Test Systems");
@@ -56,9 +95,8 @@ const workspace = process.env.CAREER_HQ_WORKSPACE;
 assert.ok(workspace, "test workspace is required");
 assert.ok(existsSync(join(workspace, ".job-search", "materials", "local-test", "local-test-001-resume-v001.pdf")), "older private material must remain untouched");
 rmSync(join(workspace, ".job-search"), { recursive: true, force: true });
-const freshResponse = await fetch(url, { headers: { accept: "text/html" } });
-const freshHtml = await freshResponse.text();
-assert.match(freshHtml, /Start with Codex/);
-assert.match(freshHtml, /Set up my job search/);
-assert.doesNotMatch(freshHtml, /Local Test Candidate|Local Test Systems/);
+const fresh = await page("/?view=overview");
+assert.match(fresh.html, /Start with Codex/);
+assert.match(fresh.html, /Set up my job search/);
+assert.doesNotMatch(fresh.html, /Local Test Candidate|Local Test Systems/);
 console.log("Local dashboard verification passed");

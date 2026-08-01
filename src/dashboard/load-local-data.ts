@@ -8,6 +8,7 @@ import type {
   MaterialVersion,
   PostingSnapshot,
 } from "./types";
+import { localDateKey } from "./action-center";
 
 type JsonObject = Record<string, unknown>;
 
@@ -114,12 +115,19 @@ function importantAnswer(value: unknown): ImportantAnswer {
 
 function materialVersion(value: unknown): MaterialVersion {
   const item = object(value);
+  const visualVerification = object(item.visualVerification);
+  const visualVerificationStatus = visualVerification.status === "passed"
+    ? "passed"
+    : visualVerification.status === "required"
+      ? "required"
+      : "unknown";
   return {
     version: displayText(item.version, "Recorded version"),
     generatedAt: text(item.generatedAt, ""),
     files: objects(item.files).map((file) => ({
       kind: text(file.kind, "document"),
     })),
+    visualVerificationStatus,
   };
 }
 
@@ -206,6 +214,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
       return {
         private: true,
         workspaceStatus: "needs-setup",
+        today: localDateKey(),
         generatedAt: "Not initialized",
         applicant: { displayName: "Your", targetLane: "Complete onboarding to set target roles" },
         applications: [],
@@ -225,6 +234,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
     return {
       private: true,
       workspaceStatus: "ready",
+      today: localDateKey(),
       generatedAt: text(ledger.updatedAt, "Local workspace"),
       applicant: applicantFrom(profileValue),
       applications,
@@ -236,6 +246,7 @@ export async function loadLocalDashboard(): Promise<DashboardData> {
     return {
       private: true,
       workspaceStatus: "error",
+      today: localDateKey(),
       generatedAt: "Read error",
       applicant: { displayName: "Your", targetLane: "Local workspace needs attention" },
       applications: [],

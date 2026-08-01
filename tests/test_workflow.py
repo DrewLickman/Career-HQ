@@ -120,21 +120,31 @@ class CareerHQWorkflowTests(unittest.TestCase):
             ).stdout)
             expected = "I authorize submission to Fictional Employer for Customer Support Engineer"
             self.assertEqual(review["displayName"], "Fictional Employer \u2014 Customer Support Engineer")
-            self.assertEqual(review["requiredApproval"], expected)
-            self.assertNotIn("app-random1234", review["requiredApproval"])
+            self.assertEqual(review["suggestedApproval"], expected)
+            self.assertNotIn("app-random1234", review["suggestedApproval"])
+            self.assertIn("Exact wording is not required", review["approvalGuidance"])
 
-            old_confirmation = self.run_cli(
-                "approve",
-                "--workspace",
-                folder,
-                "--application-id",
-                "app-random1234",
-                "--confirmation",
+            rejected_confirmations = [
                 "I authorize submission for app-random1234",
-                check=False,
-            )
-            self.assertNotEqual(old_confirmation.returncode, 0)
-            self.assertIn(expected, old_confirmation.stderr)
+                "Reviewed",
+                "Looks good",
+                "I approve the resume",
+                "Do not submit this application",
+            ]
+            for confirmation in rejected_confirmations:
+                with self.subTest(confirmation=confirmation):
+                    rejected = self.run_cli(
+                        "approve",
+                        "--workspace",
+                        folder,
+                        "--application-id",
+                        "app-random1234",
+                        "--confirmation",
+                        confirmation,
+                        check=False,
+                    )
+                    self.assertNotEqual(rejected.returncode, 0)
+                    self.assertIn("Clear application-specific submission authorization", rejected.stderr)
 
             approved = json.loads(self.run_cli(
                 "approve",
@@ -143,10 +153,21 @@ class CareerHQWorkflowTests(unittest.TestCase):
                 "--application-id",
                 "app-random1234",
                 "--confirmation",
+                "Reviewed, authorized for submission",
+            ).stdout)
+            self.assertEqual(approved["confirmation"], "Reviewed, authorized for submission")
+            self.assertEqual(approved["scope"], "app-random1234")
+
+            exact_approval = json.loads(self.run_cli(
+                "approve",
+                "--workspace",
+                folder,
+                "--application-id",
+                "app-random1234",
+                "--confirmation",
                 expected,
             ).stdout)
-            self.assertEqual(approved["confirmation"], expected)
-            self.assertEqual(approved["scope"], "app-random1234")
+            self.assertEqual(exact_approval["confirmation"], expected)
 
 
 if __name__ == "__main__":

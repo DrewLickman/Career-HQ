@@ -1,0 +1,4 @@
+interface:
+  display_name: "Process Job Mail"
+  short_description: "Triage job email into Career HQ safely"
+  default_prompt: "Use $process-job-mail to review my job-related email, update Career HQ, and organize the processed messages."

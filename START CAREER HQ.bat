@@ -29,7 +29,7 @@ if /I "%~1"=="--check" (
 )
 
 echo Starting your private Career HQ dashboard...
-echo This window keeps it running for up to 10 minutes.
+echo This window keeps it running until you close the dashboard.
 echo.
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\run-bounded-dev-server.ps1" -OpenBrowser

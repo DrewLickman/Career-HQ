@@ -28,6 +28,7 @@ export type MaterialVersion = {
   version: string;
   generatedAt: string;
   files: MaterialFile[];
+  visualVerificationStatus: "required" | "passed" | "unknown";
 };
 
 export type Application = {
@@ -67,6 +68,7 @@ export type DashboardData = {
   private: true;
   workspaceStatus: "needs-setup" | "ready" | "error";
   applicant: { displayName: string; targetLane: string };
+  today: string;
   generatedAt: string;
   applications: Application[];
   message?: string;
