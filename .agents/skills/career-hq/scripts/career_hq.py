@@ -27,6 +27,41 @@ STATUSES = {
     "rejected", "withdrawn", "closed", "submission-unconfirmed", "submitted",
 }
 TERMINAL = {"rejected", "withdrawn", "closed"}
+RESUME_FORMAT_CONTRACT_VERSION = 2
+RESUME_GENERATOR_ID = "career-hq.prepare-resume"
+RESUME_GENERATOR_VERSION = 2
+DEFAULT_LAYOUT_PROFILE_ID = "baseline-reference-v1"
+RESUME_LAYOUT_PROFILES = {
+    "baseline-reference-v1": {
+        "version": 1,
+        "docx": {
+            "vertical_margin": 0.62, "horizontal_margin": 0.7, "header_footer_distance": 0.3,
+            "body_size": 9.4, "body_line_spacing": 1.02, "heading_size": 11.5,
+            "title_size": 20, "role_size": 11, "contact_size": 9.0,
+            "link_contact_size": 8.6, "contact_column_width": 2.15,
+        },
+        "pdf": {
+            "horizontal_margin": 0.7, "vertical_margin": 0.55, "body_size": 8.9,
+            "body_leading": 9.7, "title_size": 19, "role_size": 10.5,
+            "contact_size": 8.4, "heading_size": 10.8, "contact_column_width": 2.15,
+        },
+    },
+    "sonata-compact-v1": {
+        "version": 1,
+        "docx": {
+            "vertical_margin": 0.62, "horizontal_margin": 0.7, "header_footer_distance": 0.3,
+            "body_size": 9.4, "body_line_spacing": 1.02, "heading_size": 11.5,
+            "title_size": 20, "role_size": 11, "contact_size": 9.0,
+            "link_contact_size": 8.6, "contact_column_width": 2.15,
+        },
+        "pdf": {
+            "horizontal_margin": 0.7, "vertical_margin": 0.55, "body_size": 8.9,
+            "body_leading": 9.7, "title_size": 19, "role_size": 10.5,
+            "contact_size": 8.4, "heading_size": 10.8, "contact_column_width": 2.15,
+        },
+    },
+}
+COURSE_CODE_PREFIX = re.compile(r"^\s*[A-Za-z]{2,10}\s*\d{3,4}[A-Za-z]?\s*(?:[-:\u2013\u2014]\s*)?")
 QUESTIONS = [
     (
         "identity",
@@ -106,6 +141,7 @@ def empty_profile() -> dict[str, Any]:
         "applicationDefaults": {},
         "sensitiveAnswers": {},
         "trackingPreferences": {},
+        "resumePreferences": {},
         "summary": {},
         "skills": [],
         "experience": [],
@@ -329,6 +365,60 @@ def verified_value(item: Any, label: str, required: bool = True) -> Any:
     return item.get("value")
 
 
+def resolve_resume_layout_profile(profile: dict[str, Any]) -> dict[str, Any]:
+    preference = get_nested(profile, "resumePreferences.layoutProfile")
+    if preference is None:
+        profile_id, source, verified_at = DEFAULT_LAYOUT_PROFILE_ID, "system-default", None
+    else:
+        profile_id = str(verified_value(preference, "resumePreferences.layoutProfile"))
+        source, verified_at = preference["source"], preference["verifiedAt"]
+    if profile_id not in RESUME_LAYOUT_PROFILES:
+        raise SystemExit(f"Unsupported resume layout profile: {profile_id}")
+    return {"id": profile_id, "version": RESUME_LAYOUT_PROFILES[profile_id]["version"], "source": source, "verifiedAt": verified_at}
+
+
+def layout_tokens(evidence: dict[str, Any]) -> dict[str, Any]:
+    profile_id = evidence.get("layoutProfile", {}).get("id", DEFAULT_LAYOUT_PROFILE_ID)
+    return RESUME_LAYOUT_PROFILES[profile_id]
+
+
+def format_coursework_name(value: Any) -> str:
+    original = str(value).strip()
+    display = COURSE_CODE_PREFIX.sub("", original).strip()
+    return display or original
+
+
+def nonbreaking_text(value: Any) -> str:
+    return str(value).replace(" ", "\u00a0")
+
+
+def education_display(item: dict[str, Any]) -> tuple[str, str, str | None, list[str]]:
+    degree = " in ".join(value for value in (item.get("degree"), item.get("field")) if value)
+    if item.get("minor"):
+        degree = f"{degree}, Minor in {item['minor']}"
+    dates = " - ".join(value for value in (format_resume_date(item.get("start_date")), format_resume_date(item.get("graduation_date"))) if value)
+    honors = ", ".join(str(value) for value in item.get("honors") or [])
+    details = " | ".join(value for value in (dates, f"GPA: {item['gpa']}" if item.get("gpa") is not None else None, honors or None) if value)
+    return degree, str(item.get("institution") or ""), details or None, [format_coursework_name(course["value"]) for course in item.get("coursework") or []]
+
+
+def resume_generation_metadata(layout_profile: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "formatContractVersion": RESUME_FORMAT_CONTRACT_VERSION,
+        "generator": {"id": RESUME_GENERATOR_ID, "version": RESUME_GENERATOR_VERSION},
+        "layoutProfile": layout_profile,
+    }
+
+
+def validate_material_format_contract(material: dict[str, Any]) -> None:
+    if int(material.get("formatContractVersion", 1)) < RESUME_FORMAT_CONTRACT_VERSION:
+        return
+    if not isinstance(material.get("generator"), dict) or material["generator"].get("id") != RESUME_GENERATOR_ID:
+        raise SystemExit("New-format resume materials must record the canonical Career HQ generator.")
+    if not isinstance(material.get("layoutProfile"), dict) or material["layoutProfile"].get("id") not in RESUME_LAYOUT_PROFILES:
+        raise SystemExit("New-format resume materials must record a supported layout profile.")
+
+
 def collect_resume_evidence(profile: dict[str, Any], posting_text: str) -> dict[str, Any]:
     unresolved = [conflict for conflict in profile.get("conflicts", []) if conflict.get("status") == "unresolved"]
     if unresolved:
@@ -430,6 +520,7 @@ def collect_resume_evidence(profile: dict[str, Any], posting_text: str) -> dict[
         "experience": experiences,
         "education": education,
         "projects": projects,
+        "layoutProfile": resolve_resume_layout_profile(profile),
     }
 
 
@@ -531,25 +622,27 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
     except ImportError as exc:
         raise SystemExit("Install requirements.txt before generating resumes.") from exc
 
+    tokens = layout_tokens(evidence)["docx"]
     document = Document()
     section = document.sections[0]
-    section.top_margin = section.bottom_margin = Inches(0.62)
-    section.left_margin = section.right_margin = Inches(0.7)
-    section.header_distance = section.footer_distance = Inches(0.3)
+    section.top_margin = section.bottom_margin = Inches(tokens["vertical_margin"])
+    section.left_margin = section.right_margin = Inches(tokens["horizontal_margin"])
+    section.header_distance = section.footer_distance = Inches(tokens["header_footer_distance"])
     styles = document.styles
     normal = styles["Normal"]
-    normal.font.name = "Arial"; normal._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); normal._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); normal.font.size = Pt(9.4)
-    normal.paragraph_format.space_after = Pt(2); normal.paragraph_format.line_spacing = 1.02
+    normal.font.name = "Arial"; normal._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); normal._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); normal.font.size = Pt(tokens["body_size"])
+    normal.paragraph_format.space_after = Pt(2); normal.paragraph_format.line_spacing = tokens["body_line_spacing"]
     for style_name, size in (("Heading 1", 11.5), ("Heading 2", 10)):
         style = styles[style_name]
-        style.font.name = "Arial"; style._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); style._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); style.font.size = Pt(size); style.font.bold = True; style.font.color.rgb = RGBColor(23, 32, 27)
+        resolved_size = tokens["heading_size"] if style_name == "Heading 1" else size
+        style.font.name = "Arial"; style._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); style._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); style.font.size = Pt(resolved_size); style.font.bold = True; style.font.color.rgb = RGBColor(23, 32, 27)
         style.paragraph_format.space_before = Pt(7); style.paragraph_format.space_after = Pt(2)
         style.paragraph_format.keep_with_next = True
 
     title = document.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title.paragraph_format.space_after = Pt(1)
-    run = title.add_run(str(evidence["name"])); run.font.name = "Arial"; run._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); run.font.size = Pt(20); run.bold = True; run.font.color.rgb = RGBColor(23, 32, 27)
+    run = title.add_run(str(evidence["name"])); run.font.name = "Arial"; run._element.rPr.rFonts.set(qn("w:ascii"), "Arial"); run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial"); run.font.size = Pt(tokens["title_size"]); run.bold = True; run.font.color.rgb = RGBColor(23, 32, 27)
     target_role = document.add_paragraph()
     target_role.alignment = WD_ALIGN_PARAGRAPH.CENTER
     target_role.paragraph_format.space_after = Pt(2)
@@ -557,7 +650,7 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
     target_role_run.font.name = "Arial"
     target_role_run._element.rPr.rFonts.set(qn("w:ascii"), "Arial")
     target_role_run._element.rPr.rFonts.set(qn("w:hAnsi"), "Arial")
-    target_role_run.font.size = Pt(11)
+    target_role_run.font.size = Pt(tokens["role_size"])
     target_role_run.bold = True
     target_role_run.font.color.rgb = RGBColor(23, 32, 27)
     contact_rows = [
@@ -575,7 +668,7 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
     contact_table = document.add_table(rows=len(contact_rows), cols=3)
     contact_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     contact_table.autofit = False
-    table_width_twips = 9288  # 6.45 inches: wide, but still inset from the 7.1-inch text area.
+    table_width_twips = int(tokens["contact_column_width"] * 3 * 1440)
     column_width_twips = table_width_twips // 3
     table_properties = contact_table._tbl.tblPr
     table_width = table_properties.first_child_found_in("w:tblW")
@@ -595,7 +688,7 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
 
     for row_index, values in enumerate(contact_rows):
         for cell, value in zip(contact_table.rows[row_index].cells, values):
-            cell.width = Inches(2.15)
+            cell.width = Inches(tokens["contact_column_width"])
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             cell_width = cell._tc.get_or_add_tcPr().get_or_add_tcW()
             cell_width.set(qn("w:w"), str(column_width_twips))
@@ -617,7 +710,7 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
             paragraph.paragraph_format.space_before = Pt(0)
             paragraph.paragraph_format.space_after = Pt(0)
             contact_run = paragraph.add_run(value)
-            contact_run.font.size = Pt(8.6 if row_index else 9.0)
+            contact_run.font.size = Pt(tokens["link_contact_size"] if row_index else tokens["contact_size"])
 
     document.add_heading("PROFESSIONAL SUMMARY", level=1)
     document.add_paragraph(str(evidence["summary"]))
@@ -669,32 +762,19 @@ def build_docx(output: Path, evidence: dict[str, Any], application: dict[str, An
     if evidence.get("education"):
         document.add_heading("EDUCATION", level=1)
         for item in evidence["education"]:
-            degree = " in ".join(value for value in (item.get("degree"), item.get("field")) if value)
-            if item.get("minor"):
-                degree = f"{degree}, Minor in {item['minor']}"
-            school = document.add_paragraph()
-            school.paragraph_format.space_after = Pt(0); school.paragraph_format.keep_with_next = True
-            school.add_run(f"{degree} | {item.get('institution', '')}").bold = True
-            dates = " - ".join(
-                value for value in (
-                    format_resume_date(item.get("start_date")),
-                    format_resume_date(item.get("graduation_date")),
-                ) if value
-            )
-            honors = ", ".join(str(value) for value in item.get("honors") or [])
-            details = " | ".join(
-                value for value in (
-                    dates,
-                    f"GPA: {item['gpa']}" if item.get("gpa") is not None else None,
-                    honors or None,
-                ) if value
-            )
+            degree, institution, details, course_names = education_display(item)
+            degree_line = document.add_paragraph()
+            degree_line.paragraph_format.space_after = Pt(0); degree_line.paragraph_format.keep_with_next = True
+            degree_line.add_run(degree).bold = True
+            institution_line = document.add_paragraph()
+            institution_line.paragraph_format.space_after = Pt(0); institution_line.paragraph_format.keep_with_next = True
+            institution_line.add_run(nonbreaking_text(institution)).bold = True
             if details:
                 document.add_paragraph(details)
-            if item.get("coursework"):
+            if course_names:
                 courses = document.add_paragraph()
                 courses.add_run("Relevant coursework: ").bold = True
-                courses.add_run("; ".join(str(course["value"]) for course in item["coursework"]))
+                courses.add_run("; ".join(course_names))
     document.save(output)
 
 
@@ -706,16 +786,17 @@ def build_pdf(output: Path, evidence: dict[str, Any], application: dict[str, Any
         from reportlab.lib.pagesizes import LETTER
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Table, TableStyle
+        from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Table, TableStyle
     except ImportError as exc:
         raise SystemExit("Install requirements.txt before generating resumes.") from exc
 
+    tokens = layout_tokens(evidence)["pdf"]
     styles = getSampleStyleSheet()
-    body = ParagraphStyle("ResumeBody", parent=styles["BodyText"], fontName="Helvetica", fontSize=8.9, leading=9.7, spaceAfter=1, textColor=HexColor("#17201B"))
-    title = ParagraphStyle("ResumeTitle", parent=body, fontName="Helvetica-Bold", fontSize=19, leading=20, alignment=TA_CENTER, spaceAfter=0.5)
-    target_role = ParagraphStyle("ResumeTargetRole", parent=body, fontName="Helvetica-Bold", fontSize=10.5, leading=11.5, alignment=TA_CENTER, spaceAfter=1.5)
-    contact = ParagraphStyle("ResumeContact", parent=body, fontSize=8.4, leading=9.2, alignment=TA_CENTER, spaceAfter=0.5)
-    heading = ParagraphStyle("ResumeHeading", parent=body, fontName="Helvetica-Bold", fontSize=10.8, leading=11.8, spaceBefore=4.5, spaceAfter=1.5, keepWithNext=True)
+    body = ParagraphStyle("ResumeBody", parent=styles["BodyText"], fontName="Helvetica", fontSize=tokens["body_size"], leading=tokens["body_leading"], spaceAfter=1, textColor=HexColor("#17201B"))
+    title = ParagraphStyle("ResumeTitle", parent=body, fontName="Helvetica-Bold", fontSize=tokens["title_size"], leading=tokens["title_size"] + 1, alignment=TA_CENTER, spaceAfter=0.5)
+    target_role = ParagraphStyle("ResumeTargetRole", parent=body, fontName="Helvetica-Bold", fontSize=tokens["role_size"], leading=tokens["role_size"] + 1, alignment=TA_CENTER, spaceAfter=1.5)
+    contact = ParagraphStyle("ResumeContact", parent=body, fontSize=tokens["contact_size"], leading=tokens["contact_size"] + 0.8, alignment=TA_CENTER, spaceAfter=0.5)
+    heading = ParagraphStyle("ResumeHeading", parent=body, fontName="Helvetica-Bold", fontSize=tokens["heading_size"], leading=tokens["heading_size"] + 1, spaceBefore=4.5, spaceAfter=1.5, keepWithNext=True)
     role = ParagraphStyle("ResumeRole", parent=body, fontName="Helvetica-Bold", spaceBefore=2.5, spaceAfter=0, keepWithNext=True)
     bullet = ParagraphStyle("ResumeBullet", parent=body, leftIndent=15, firstLineIndent=-7.5, bulletIndent=4, spaceAfter=0)
     story = [
@@ -735,7 +816,7 @@ def build_pdf(output: Path, evidence: dict[str, Any], application: dict[str, Any
         row.extend([""] * (3 - len(row)))
     contact_table = Table(
         [[Paragraph(escape(value), contact) for value in row] for row in contact_rows],
-        colWidths=[2.15 * inch] * 3,
+        colWidths=[tokens["contact_column_width"] * inch] * 3,
         hAlign="CENTER",
     )
     contact_table_style = [
@@ -783,31 +864,15 @@ def build_pdf(output: Path, evidence: dict[str, Any], application: dict[str, Any
     if evidence.get("education"):
         story.append(Paragraph("EDUCATION", heading))
         for item in evidence["education"]:
-            degree = " in ".join(value for value in (item.get("degree"), item.get("field")) if value)
-            if item.get("minor"):
-                degree = f"{degree}, Minor in {item['minor']}"
-            story.append(Paragraph(escape(f"{degree} | {item.get('institution', '')}"), role))
-            dates = " - ".join(
-                value for value in (
-                    format_resume_date(item.get("start_date")),
-                    format_resume_date(item.get("graduation_date")),
-                ) if value
-            )
-            honors = ", ".join(str(value) for value in item.get("honors") or [])
-            details = " | ".join(
-                value for value in (
-                    dates,
-                    f"GPA: {item['gpa']}" if item.get("gpa") is not None else None,
-                    honors or None,
-                ) if value
-            )
+            degree, institution, details, course_names = education_display(item)
+            education_story = [Paragraph(escape(degree), role), Paragraph(escape(nonbreaking_text(institution)), role)]
             if details:
-                story.append(Paragraph(escape(details), body))
-            if item.get("coursework"):
-                courses = "; ".join(str(course["value"]) for course in item["coursework"])
-                story.append(Paragraph(f"<b>Relevant coursework:</b> {escape(courses)}", body))
+                education_story.append(Paragraph(escape(details), body))
+            if course_names:
+                education_story.append(Paragraph(f"<b>Relevant coursework:</b> {escape('; '.join(course_names))}", body))
+            story.append(KeepTogether(education_story))
 
-    document = SimpleDocTemplate(str(output), pagesize=LETTER, rightMargin=0.7 * inch, leftMargin=0.7 * inch, topMargin=0.55 * inch, bottomMargin=0.55 * inch, title=f"{evidence['name']} - {application['role']}", author="Career HQ")
+    document = SimpleDocTemplate(str(output), pagesize=LETTER, rightMargin=tokens["horizontal_margin"] * inch, leftMargin=tokens["horizontal_margin"] * inch, topMargin=tokens["vertical_margin"] * inch, bottomMargin=tokens["vertical_margin"] * inch, title=f"{evidence['name']} - {application['role']}", author="Career HQ")
     document.build(story)
 
 
@@ -846,6 +911,7 @@ def cmd_prepare_resume(args: argparse.Namespace) -> None:
         ],
         "visualVerification": {"status": "required", "verifiedAt": None, "notes": None},
     }
+    manifest.update(resume_generation_metadata(evidence["layoutProfile"]))
     manifest_path = application_dir / f"{stem}-evidence.json"
     save_json(manifest_path, manifest)
     application["materials"].append({**manifest, "manifestPath": manifest_path.relative_to(paths["root"]).as_posix()})
@@ -862,6 +928,7 @@ def cmd_mark_visual(args: argparse.Namespace) -> None:
     if not application.get("materials"):
         raise SystemExit("No material version exists.")
     material = application["materials"][-1]
+    validate_material_format_contract(material)
     for file in material["files"]:
         path = paths["root"] / file["path"]
         if not path.exists() or sha256(path) != file["sha256"]:

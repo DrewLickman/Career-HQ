@@ -36,7 +36,7 @@ Read [quality-rubric.md](references/quality-rubric.md), then inspect the whole p
 - `suggested` — show an exact proposed change that needs the user's content or design decision.
 - `cannot-claim` — state that the posting asks for something the evidence does not support.
 
-Automatically fix only grammar, tense, punctuation, clarity, repetition, ordering, conservative job-language alignment, and layout issues that preserve the baseline visual system. Map every tailored summary or bullet to exact verified source evidence. Use a truth-reviewed tailoring JSON with `python scripts/career_hq.py prepare-resume --tailoring-file`; do not bypass its verification checks.
+Automatically fix only grammar, tense, punctuation, clarity, repetition, ordering, conservative job-language alignment, and layout issues that preserve the selected visual system. A verified `resumePreferences.layoutProfile` overrides a baseline style reference; when it is present, use `prepare-resume` as the only document builder and do not create role-specific layout scripts. Map every tailored summary or bullet to exact verified source evidence. Use a truth-reviewed tailoring JSON with `python scripts/career_hq.py prepare-resume --tailoring-file`; do not bypass its verification checks.
 
 Ask at most five ranked, job-relevant questions at a time. Ask for concrete scope, tools, users, team size, issue volume, approved metrics, or outcomes. Record each confirmed answer with its source and verification date before using it. Preserve conflicts instead of choosing a date, title, number, or responsibility on the user's behalf.
 
@@ -45,7 +45,7 @@ Never invent or inflate skills, metrics, technologies, duties, titles, dates, cr
 ## Generate and verify
 
 1. Run `prepare-resume` only after verified claims and an immutable posting snapshot are available.
-2. Preserve the baseline resume's recognizable page flow, hierarchy, typography, spacing, bullet treatment, density, and contact treatment unless the user authorizes a redesign.
+2. Preserve the verified layout profile when one is selected; otherwise preserve the baseline resume's recognizable page flow, hierarchy, typography, spacing, bullet treatment, density, and contact treatment unless the user authorizes a redesign.
 3. Render and inspect every page of the generated DOCX and PDF. Confirm the exact role title appears in the header, no content is clipped or sparse by accident, and the rendered formats reflect the same approved claims.
 4. Re-audit the generated version. Repeat only while a meaningful safe improvement remains; do not create duplicate versions for cosmetic churn.
 5. Mark the goal complete only when the full rubric passes. Give the user direct links to the latest DOCX and PDF and ask them to review one concrete item.

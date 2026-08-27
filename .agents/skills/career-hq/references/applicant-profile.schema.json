@@ -14,6 +14,13 @@
       "additionalProperties": true
     },
     "searchDirection": { "type": "object" },
+    "resumePreferences": {
+      "type": "object",
+      "properties": {
+        "layoutProfile": { "$ref": "#/$defs/evidenceValue" }
+      },
+      "additionalProperties": true
+    },
     "skills": { "type": "array" },
     "experience": { "type": "array" },
     "sources": { "type": "array" },

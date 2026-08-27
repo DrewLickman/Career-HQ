@@ -9,6 +9,7 @@ from pathlib import Path
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from pypdf import PdfReader
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -62,6 +63,80 @@ class CareerHQWorkflowTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             with self.assertRaisesRegex(SystemExit, "role title is required"):
                 resume_builder["build_docx"](Path(folder) / "missing-role.docx", evidence, {})
+
+    def test_sonata_layout_profile_and_education_display_are_consistent(self):
+        resume_builder = runpy.run_path(str(REPO / ".agents" / "skills" / "career-hq" / "scripts" / "career_hq.py"))
+        profile = {
+            "resumePreferences": {
+                "layoutProfile": {
+                    "value": "sonata-compact-v1",
+                    "source": "fictional-fixture",
+                    "verifiedAt": "2026-08-26",
+                    "verified": True,
+                }
+            }
+        }
+        layout = resume_builder["resolve_resume_layout_profile"](profile)
+        self.assertEqual(layout["id"], "sonata-compact-v1")
+        self.assertEqual(layout["source"], "fictional-fixture")
+        self.assertEqual(
+            resume_builder["resolve_resume_layout_profile"]({})["id"],
+            "baseline-reference-v1",
+        )
+        self.assertEqual(resume_builder["format_coursework_name"]("TEST 3110 - Systems Design"), "Systems Design")
+        self.assertEqual(resume_builder["format_coursework_name"]("Portfolio Studio"), "Portfolio Studio")
+
+        evidence = {
+            "name": "Avery Rowan",
+            "phone": "fictional-phone",
+            "location": "Madison, Wisconsin",
+            "email": "avery.rowan@example.test",
+            "links": [],
+            "summary": "Fictional implementation specialist.",
+            "skills": [],
+            "experience": [],
+            "projects": [],
+            "layoutProfile": layout,
+            "education": [{
+                "degree": "Bachelor of Science",
+                "field": "Systems Design",
+                "minor": "Operations",
+                "institution": "Middle Example State University",
+                "start_date": "2020-08",
+                "graduation_date": "2024-12",
+                "gpa": "3.8",
+                "honors": ["Fictional Honors"],
+                "coursework": [
+                    {"value": "TEST 3110 - Systems Design"},
+                    {"value": "Portfolio Studio"},
+                ],
+            }],
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            docx_path = Path(folder) / "fictional-resume.docx"
+            pdf_path = Path(folder) / "fictional-resume.pdf"
+            resume_builder["build_docx"](docx_path, evidence, {"role": "Implementation Specialist"})
+            resume_builder["build_pdf"](pdf_path, evidence, {"role": "Implementation Specialist"})
+            document = Document(docx_path)
+            paragraphs = [paragraph.text for paragraph in document.paragraphs]
+            education_index = paragraphs.index("EDUCATION")
+            self.assertEqual(paragraphs[education_index + 1], "Bachelor of Science in Systems Design, Minor in Operations")
+            self.assertEqual(paragraphs[education_index + 2].replace("\u00a0", " "), "Middle Example State University")
+            self.assertIn("\u00a0", paragraphs[education_index + 2])
+            self.assertEqual(paragraphs[education_index + 3], "August 2020 - December 2024 | GPA: 3.8 | Fictional Honors")
+            self.assertIn("Relevant coursework: Systems Design; Portfolio Studio", paragraphs)
+            self.assertNotIn("TEST 3110", "\n".join(paragraphs))
+            pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(str(pdf_path)).pages)
+            self.assertIn("Bachelor of Science in Systems Design, Minor in Operations", pdf_text)
+            self.assertIn("Middle Example State University", pdf_text.replace("\u00a0", " "))
+            self.assertIn("Relevant coursework: Systems Design; Portfolio Studio", pdf_text)
+            self.assertNotIn("TEST 3110", pdf_text)
+
+        metadata = resume_builder["resume_generation_metadata"](layout)
+        self.assertEqual(metadata["generator"]["id"], "career-hq.prepare-resume")
+        resume_builder["validate_material_format_contract"](metadata)
+        with self.assertRaisesRegex(SystemExit, "canonical Career HQ generator"):
+            resume_builder["validate_material_format_contract"]({"formatContractVersion": 2, "layoutProfile": layout})
 
     def test_init_questions_and_conflict_preservation(self):
         with tempfile.TemporaryDirectory() as folder:
