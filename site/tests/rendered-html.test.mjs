@@ -29,8 +29,10 @@ test("server-renders the public Career HQ setup guide", async () => {
   assert.match(html, />CHQ</);
   assert.match(html, /Fictional data only/);
   assert.match(html, />Active</);
+  assert.match(html, />Submitted</);
   assert.match(html, />Closed</);
-  assert.match(html, /4 active .* 1 closed/);
+  assert.match(html, /Open Submitted for follow-ups or Closed for history/);
+  assert.match(html, /3 active .* 1 submitted .* 1 closed/);
   assert.match(html, /Latest materials/);
   assert.match(html, /Private records remain on your PC/);
   assert.match(html, /Creating application materials never authorizes submission/);

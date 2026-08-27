@@ -127,7 +127,11 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState<string>(applications[0].id);
 
   const visibleApplications = useMemo(
-    () => applications.filter((application) => filter === "Active" ? application.status !== "Closed" : application.status === filter),
+    () => applications.filter((application) => application.status === "Submitted"
+      ? filter === "Submitted"
+      : filter === "Active"
+        ? application.status !== "Closed"
+        : application.status === filter),
     [filter],
   );
   const selected =
@@ -259,7 +263,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">Interactive fictional example</p>
             <h2>Preview the local application dashboard.</h2>
-            <p>Active applications appear first. Open Closed when you need history, then select a role to see its evidence, latest materials, and next action.</p>
+            <p>Active applications appear first. Open Submitted for follow-ups or Closed for history, then select a role to see its evidence, latest materials, and next action.</p>
           </div>
           <span className="fiction-badge">Fictional data only</span>
         </div>
@@ -270,7 +274,7 @@ export default function Home() {
             <div className="local-card"><span className="status-dot" /><b>Local dashboard</b><p>The real dashboard reads your private files only when you open it on your PC.</p></div>
           </div>
           <div className="dashboard-main">
-            <div className="dashboard-title"><div><small>FICTIONAL WEEKLY BRIEFING</small><h3>Move the right opportunities forward.</h3></div><span>4 active · 1 closed</span></div>
+            <div className="dashboard-title"><div><small>FICTIONAL WEEKLY BRIEFING</small><h3>Move the right opportunities forward.</h3></div><span>3 active · 1 submitted · 1 closed</span></div>
             <div className="metrics-row">
               <div><small>Ready to apply</small><strong>1</strong><span>Awaiting review</span></div>
               <div><small>Active pipeline</small><strong>3</strong><span>Moving opportunities</span></div>

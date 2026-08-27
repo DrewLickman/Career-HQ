@@ -124,6 +124,12 @@ When materials are ready, give the user a direct link to each local file and ask
 
 ## Review, approval, and tracking
 
+## Authorized application continuation
+
+Once the ledger contains clear, application-specific submission authorization and no unresolved questions, continue the named application through every safe, verified step without asking for duplicate permission. Fill all verified profile values, preserve choices the user has already made in the form, use recorded application answers, and upload the exact latest verified resume when the user says to continue or complete the application.
+
+Stop only when the site needs an unverified fact or user choice, requires the user to authenticate or solve a CAPTCHA, presents a new legal acknowledgment, or reaches the final external submit action. Validate each completed screen before advancing; do not hand the application back early merely because more safe fields remain.
+
 Creating materials never authorizes submission. Run `review` and present its packet before requesting application-specific authorization. Record approval only when the user clearly authorizes submission for the one active, named application. Do not require memorized or verbatim wording.
 
 Present approvals in human terms. Show the employer, job title, and a direct link to the exact resume being approved. Accept clear natural-language approval such as **authorized for submission**, **approved to submit**, **go ahead and submit**, or **I authorize submission to Employer for Job Title** when exactly one application is the active subject. Pass the user's actual wording to `approve`; never rewrite vague wording into approval. Replies such as **reviewed**, **looks good**, or **yes** do not authorize submission unless they clearly refer to submitting. If the wording or active application is ambiguous, ask one short confirmation naming the employer and role. Pass the internal application ID to commands silently in the background, but never expose it or require the user to find it. If multiple applications are ready, handle them one at a time by employer and job title.

@@ -78,7 +78,7 @@ test("filters needs-action, searchable application tags, active, and terminal vi
   ];
   const actionIds = new Set(["beta"]);
 
-  assert.deepEqual(filterApplications(applications, "", "active", actionIds).map((item) => item.id), ["alpha", "beta", "submitted"]);
+  assert.deepEqual(filterApplications(applications, "", "active", actionIds).map((item) => item.id), ["alpha", "beta"]);
   assert.deepEqual(filterApplications(applications, "", "needs-action", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "searchable", "active", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "research", "active", actionIds).map((item) => item.id), ["alpha"]);
@@ -89,6 +89,16 @@ test("filters needs-action, searchable application tags, active, and terminal vi
   assert.deepEqual(filterApplications(applications, "8/5", "active", actionIds).map((item) => item.id), ["beta"]);
   assert.deepEqual(filterApplications(applications, "", "submitted", actionIds).map((item) => item.id), ["submitted"]);
   assert.deepEqual(filterApplications(applications, "", "terminal", actionIds).map((item) => item.id), ["closed"]);
+});
+
+test("keeps submitted applications out of every other filter", () => {
+  const submitted = application("submitted", { status: "submitted" });
+  const actionIds = new Set(["submitted"]);
+
+  for (const filter of ["active", "needs-action", "research", "ready", "attention", "assessment", "interview", "offer", "terminal"]) {
+    assert.deepEqual(filterApplications([submitted], "", filter, actionIds), [], filter);
+  }
+  assert.deepEqual(filterApplications([submitted], "", "submitted", actionIds), [submitted]);
 });
 
 test("falls back to the first visible application when selection disappears", () => {

@@ -125,11 +125,15 @@ export function filterApplications(
   return applications.filter((application) => {
     const haystack = applicationSearchTerms(application).join(" ").toLowerCase();
     const stage = applicationStage(application.status);
-    const matchesFilter = filter === "active"
-      ? stage !== "terminal"
-      : filter === "needs-action"
-        ? actionApplicationIds.has(application.id)
-        : stage === filter;
+    // Submitted is a terminal workflow state for filtering purposes: it should
+    // only appear in the Submitted view, even when a follow-up task exists.
+    const matchesFilter = stage === "submitted"
+      ? filter === "submitted"
+      : filter === "active"
+        ? stage !== "terminal"
+        : filter === "needs-action"
+          ? actionApplicationIds.has(application.id)
+          : stage === filter;
     return (!needle || haystack.includes(needle)) && matchesFilter;
   });
 }
