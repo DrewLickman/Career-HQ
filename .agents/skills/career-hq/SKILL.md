@@ -9,6 +9,12 @@ Keep all real applicant data inside the ignored `.job-search/` directory. The lo
 
 ## Guide the user
 
+## Choose the best implementation for each step
+
+Career HQ remains an AI operating system. Use reusable code when it makes the current step faster, more consistent, or easier to verify; use AI for intent, nuance, writing, and judgment. Start with `python scripts/career_hq.py inspect-workspace --workspace .` to resume without reading the entire private ledger. Use `capabilities` to discover compact tool contracts. For posting analysis, evidence retrieval, resume planning, and preflight checks, follow [procedural routing](../../../../docs/procedural-workflow.md). `needs-ai` means continue reasoning from the focused evidence; it is not a reason to stop the workflow. Expand source references whenever omissions or ambiguity matter. Never treat lexical matches as verified qualifications or inferred submission authority.
+
+## Guide the user through the current step
+
 Use plain language and get to the action quickly.
 
 1. Show the current step, such as **Step 1: Open your dashboard**.

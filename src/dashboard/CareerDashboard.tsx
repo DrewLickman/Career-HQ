@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { WorkflowTools } from "./WorkflowTools";
 import type { Application, DashboardData } from "./types";
 import {
   deriveActionTasks,
@@ -915,6 +916,8 @@ function ApplicationDetail({
               <DetailFact label="Major risk" value={application.risk} />
             </dl>
           </DetailSection>
+
+          <WorkflowTools applicationId={application.id} employer={application.employer} role={application.role} />
 
         </section>
       )}

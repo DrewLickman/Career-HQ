@@ -17,7 +17,11 @@ Canonical repository: https://github.com/DrewLickman/Career-HQ
 9. When the user has a specific job posting and resume source, use `.agents/skills/resume-builder-enhancer/SKILL.md`. It creates or resumes a truthful resume-improvement goal, ranks weaknesses, applies only verified safe changes, and asks focused questions for missing facts. Resume generation does not authorize submission.
 10. If the current Codex conversation cannot continue inside the new project, tell the user to open the cloned `Career-HQ` folder in Codex and enter exactly: `$career-hq Set up my job search`.
 
-## Hard boundaries
+## Continue with local workflow tools
+
+After initialization, use `python scripts/career_hq.py inspect-workspace --workspace .` to resume and `python scripts/career_hq.py capabilities` to discover available tools. Follow `docs/procedural-workflow.md` for evidence retrieval, tailoring plans, material checks, and focused AI context. The local dashboard uses the same tools. Codex remains responsible for judgment, wording, and resolving uncertainty; lexical matches do not prove qualifications. Inspect every rendered resume page before review. Creating a review packet does not authorize submission.
+
+## Privacy and approval boundaries
 
 - Never upload, publish, or place real applicant values in tracked files, fixtures, tests, screenshots, build output, or this hosted site.
 - For direct resume enhancement, use only a DOCX/PDF stored outside tracked source or inside `.job-search/`; store source metadata and posting snapshots only in the private workspace.

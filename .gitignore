@@ -47,6 +47,8 @@ next-env.d.ts
 /generated-materials/
 /review-packets/
 /tmp/
+/blockers.md
+/project-activity/
 __pycache__/
 *.py[cod]
 *.local.json

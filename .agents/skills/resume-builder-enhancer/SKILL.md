@@ -29,6 +29,8 @@ Read `../career-hq/references/data-schema.md` and `../career-hq/references/priva
 
 ## Audit and improve
 
+Before rereading the full profile for an existing application, run `python scripts/career_hq.py build-tailoring-plan --workspace . --application-id <resolved-id>` for relevant verified references. Use `ai-context` for a bounded evidence packet and expand omitted source context as needed. These tools support your judgment; make final selection and wording decisions yourself. Use `material-preflight` for integrity and text-parity checks before rendered-page inspection. See [procedural routing](../../../../docs/procedural-workflow.md).
+
 Read [quality-rubric.md](references/quality-rubric.md), then inspect the whole posting and resume before recommending changes. Show a concise ranked scorecard with severity (`high`, `medium`, `low`), evidence, and one of these outcomes:
 
 - `fixed` — applied automatically because the change is fully supported by verified evidence.

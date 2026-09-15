@@ -15,4 +15,6 @@ Use `$career-hq` for the private job-search workflow. When the user provides a s
 
 ## Public site boundaries
 
+The installed local dashboard includes workflow tools for evidence retrieval, resume planning, generation, file checks, and review packets. Codex uses the same tools and handles judgment and wording. See the repository's `docs/procedural-workflow.md`; these tools do not authorize submission.
+
 This website contains instructions and an interactive fictional product preview only. It has no applicant accounts, uploads, analytics, remote storage, or access to local Career HQ workspaces.

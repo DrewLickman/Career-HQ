@@ -247,6 +247,10 @@ export default function Home() {
             Career HQ is not a job board or an auto-apply bot. It is a guided system that helps Codex use verified
             facts, prepare job-specific materials, request approval, and track what happens next.
           </p>
+          <p>
+            Local workflow tools help you find relevant evidence, plan resume content, generate verified resumes,
+            check files, and create review packets. Codex helps with judgment and wording throughout the process.
+          </p>
         </div>
         <div className="capability-list">
           {systemCapabilities.map((capability, index) => (

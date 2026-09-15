@@ -74,6 +74,8 @@ The dashboard shows a setup instruction until Codex initializes `.job-search/`. 
 
 ## Core workflow commands
 
+Career HQ chooses reusable code when it helps the current step, while Codex remains the workflow guide and decision-maker. Start with `python scripts/career_hq.py capabilities` or `inspect-workspace` for compact results. The dashboard's local workflow tools call the same engine. See [procedural workflow routing](docs/procedural-workflow.md) for tool choices and AI handoffs.
+
 ```powershell
 python scripts/career_hq.py init --workspace .
 python scripts/career_hq.py questions --workspace .
